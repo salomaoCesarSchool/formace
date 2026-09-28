@@ -1,0 +1,28 @@
+# Java / Maven
+backend/target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node / Vite
+frontend/node_modules/
+frontend/dist/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.settings/
+.classpath
+.project
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local

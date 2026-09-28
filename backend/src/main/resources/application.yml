@@ -1,0 +1,68 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: formace-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/formace}
+    username: ${DB_USER:formace}
+    password: ${DB_PASSWORD:formace}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: America/Araguaina
+
+  # Carrega o data.sql (124 imoveis + lancamentos de teste) depois do Hibernate criar as tabelas
+  jpa.defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+      continue-on-error: true
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+app:
+  jwt:
+    # Em producao, sobrescreva pela variavel de ambiente JWT_SECRET
+    secret: ${JWT_SECRET:FORMACE-JWT-SECRET-KEY-2026-DESENVOLVIMENTO-SEGREDO-MANUEL-CRUZ}
+    expiration-ms: 86400000
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  fundacao:
+    nome: Fundacao Manuel Cruz
+    cnpj: "32.104.587/0001-90"
+    orgao: Ministerio Publico de Sergipe (MP-SE)
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    root: INFO
+    org.formace: DEBUG
+    org.springframework.security: INFO
