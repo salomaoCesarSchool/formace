@@ -166,3 +166,20 @@ mvn test        # FinanceiroSecurityTest: segurança (JWT/IDOR) + cálculos de m
 cd frontend
 npm run build   # tsc --noEmit + vite build (type-check e build de produção)
 ```
+
+## Uso de Inteligência Artificial
+
+Durante o desenvolvimento do projeto FORMACE, ferramentas de Inteligência Artificial
+foram utilizadas como recurso de apoio à programação e ao desenvolvimento do sistema.
+
+A IA foi utilizada principalmente para:
+- Auxílio na elaboração e revisão de código;
+- Identificação e correção de erros;
+- Apoio na estruturação da arquitetura do sistema;
+- Sugestões de implementação e boas práticas;
+- Auxílio na criação e revisão de testes;
+- Apoio na documentação do projeto.
+
+A implementação, integração, validação e decisões finais sobre o sistema foram realizadas
+e revisadas pela equipe técnica de projeto.
+
