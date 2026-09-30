@@ -6,6 +6,8 @@ import com.formace.entity.LancamentoFinanceiro;
 import com.formace.dto.FluxoDiarioResponse;
 import com.formace.exception.BadRequestException;
 import com.formace.service.FinanceiroService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ContentDisposition;
@@ -29,6 +31,7 @@ import java.util.List;
 /**
  * Modulo financeiro: lancamentos, quitacao, recibo em PDF e fluxo de caixa (RDD).
  */
+@Tag(name = "Financeiro", description = "Lancamentos, quitacao com multa/juros, recibos em PDF e fluxo de caixa (RDD)")
 @RestController
 @RequestMapping("/api/financeiro")
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class FinanceiroController {
 
     private final FinanceiroService financeiroService;
 
+    @Operation(summary = "Listar lancamentos", description = "Lista lancamentos com filtros opcionais por mes de referencia (AAAA-MM) e status.")
     @GetMapping("/lancamentos")
     public List<LancamentoFinanceiro> listar(
             @RequestParam(required = false) String mesReferencia,
@@ -43,22 +47,26 @@ public class FinanceiroController {
         return financeiroService.listar(mesReferencia, status);
     }
 
+    @Operation(summary = "Obter lancamento", description = "Retorna um lancamento pelo id. Lanca 404 se nao existir.")
     @GetMapping("/lancamentos/{id}")
     public LancamentoFinanceiro obter(@PathVariable Long id) {
         return financeiroService.obter(id);
     }
 
+    @Operation(summary = "Criar lancamento", description = "Cria um lancamento (aluguel, IPTU ou despesa). Valida o payload com Bean Validation e responde 201.")
     @PostMapping("/lancamentos")
     @ResponseStatus(HttpStatus.CREATED)
     public LancamentoFinanceiro criar(@Valid @RequestBody LancamentoRequest request) {
         return financeiroService.criar(request);
     }
 
+    @Operation(summary = "Quitar lancamento", description = "Registra o pagamento: calcula multa (2% apos vencimento) e juros de mora (1% a.m. pro rata por dia), atualiza o total e emite o recibo numerado.")
     @PostMapping("/lancamentos/{id}/pagar")
     public LancamentoFinanceiro pagar(@PathVariable Long id, @Valid @RequestBody PagarRequest request) {
         return financeiroService.pagar(id, request);
     }
 
+    @Operation(summary = "Cancelar lancamento", description = "Cancela um lancamento pendente ou atrasado.")
     @PostMapping("/lancamentos/{id}/cancelar")
     public LancamentoFinanceiro cancelar(@PathVariable Long id) {
         financeiroService.cancelar(id);
@@ -68,6 +76,7 @@ public class FinanceiroController {
     /**
      * Download do recibo numerado em PDF.
      */
+    @Operation(summary = "Baixar recibo em PDF", description = "Gera o recibo numerado (000001, 000002, ...) do lancamento quitado. Responde application/pdf.")
     @GetMapping("/lancamentos/{id}/recibo")
     public ResponseEntity<byte[]> recibo(@PathVariable Long id) {
         byte[] pdf = financeiroService.gerarReciboPdf(id);
@@ -83,6 +92,7 @@ public class FinanceiroController {
     /**
      * Fluxo de caixa diario / RDD: entradas, saidas, saldo do dia e saldo acumulado.
      */
+    @Operation(summary = "Fluxo de caixa diario (RDD)", description = "Consolida entradas, saidas, saldo do dia e saldo acumulado por dia no periodo informado.")
     @GetMapping("/fluxo-caixa")
     public List<FluxoDiarioResponse> fluxoCaixa(
             @RequestParam String de,

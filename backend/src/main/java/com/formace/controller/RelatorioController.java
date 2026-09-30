@@ -11,11 +11,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Prestacao de contas ao Ministerio Publico de Sergipe (MP-SE).
  */
+@Tag(name = "Relatorios", description = "Relatorio consolidado para o MP-SE")
 @RestController
 @RequestMapping("/api/relatorios")
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class RelatorioController {
     private final RelatorioMPService relatorioMPService;
 
     /** Resumo JSON do exercicio (cards da tela de relatorios). */
+    @Operation(summary = "Resumo do exercicio (JSON)", description = "Retorna em JSON os totais exibidos na tela de relatorios.")
     @GetMapping("/mp-se/resumo")
     public RelatorioResumoResponse resumo(@RequestParam(defaultValue = "0") int ano) {
         int exercicio = ano > 0 ? ano : java.time.LocalDate.now().getYear();
@@ -31,6 +35,7 @@ public class RelatorioController {
     }
 
     /** Relatorio anual consolidado completo em PDF. */
+    @Operation(summary = "Relatorio consolidado MP-SE (PDF)", description = "Gera o relatorio anual consolidado multipaginado em PDF para prestacao de contas.")
     @GetMapping("/mp-se")
     public ResponseEntity<byte[]> gerar(
             @RequestParam(defaultValue = "0") int ano) {

@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.Map;
 /**
  * Autenticacao da API (login gera o JWT usado por todo o resto das rotas).
  */
+@Tag(name = "Autenticacao", description = "Login e usuario autenticado")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -32,6 +35,7 @@ public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final JwtService jwtService;
 
+    @Operation(summary = "Autenticar", description = "Recebe usuario e senha e retorna o Bearer JWT (valido por 24 horas).")
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
@@ -47,6 +51,7 @@ public class AuthController {
         return ResponseEntity.ok(AuthResponse.bearer(token, jwtService.getExpirationMs(), user.getUsername(), nome, role));
     }
 
+    @Operation(summary = "Usuario autenticado", description = "Retorna o usuario correspondente ao token informado no header Authorization.")
     @GetMapping("/me")
     public ResponseEntity<Map<String, Object>> me(Authentication authentication) {
         Usuario usuario = usuarioRepository.findByUsername(authentication.getName()).orElse(null);
