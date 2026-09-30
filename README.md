@@ -167,6 +167,7 @@ cd frontend
 npm run build   # tsc --noEmit + vite build (type-check e build de produção)
 ```
 
+
 ## Uso de Inteligência Artificial
 
 Durante o desenvolvimento do projeto FORMACE, ferramentas de Inteligência Artificial
