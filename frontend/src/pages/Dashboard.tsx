@@ -1,166 +1,311 @@
-import { useEffect, useState } from 'react';
-import {
-  AlertTriangle,
-  Building2,
-  ClockAlert,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react';
-import CardKPI from '../components/CardKPI';
-import BadgeStatus from '../components/BadgeStatus';
-import { api, mensagemDeErro } from '../api/axios';
-import { formatBRL, formatData, formatMesReferencia } from '../utils/format';
-import type { DashboardData } from '../types';
+import { useEffect, useState } from "react";
+import { api, mensagemDeErro, sessaoAtual } from "../api/axios";
+import { formatBRL, formatMesReferencia } from "../utils/format";
+import type { DashboardData } from "../types";
+
+const brl = (n: number) =>
+  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+/** Converte '2026-08' em 'agosto de 2026'. */
+function mesExtenso(mes: string | undefined): string {
+  if (!mes || mes.length < 7) return "";
+  const nomes = [
+    "janeiro",
+    "fevereiro",
+    "março",
+    "abril",
+    "maio",
+    "junho",
+    "julho",
+    "agosto",
+    "setembro",
+    "outubro",
+    "novembro",
+    "dezembro",
+  ];
+  const indice = Number(mes.slice(5, 7)) - 1;
+  return `${nomes[indice] ?? ""} de ${mes.slice(0, 4)}`;
+}
+
+const statusCores: Record<string, string> = {
+  PAGO: "#e4e0fb",
+  PENDENTE: "#c9c4f7",
+  ATRASADO: "#f7c4c4",
+  CANCELADO: "#ececef",
+};
 
 /**
- * Dashboard com cards de KPI, ultimos lancamentos e painel de alertas.
+ * Dashboard (visual das telas novas): indicadores, ultimos lancamentos e alertas,
+ * alimentados por GET /api/dashboard.
  */
 export default function Dashboard() {
   const [dados, setDados] = useState<DashboardData | null>(null);
-  const [erro, setErro] = useState('');
+  const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(true);
+
+  const usuario = sessaoAtual();
 
   useEffect(() => {
     api
-      .get<DashboardData>('/dashboard')
+      .get<DashboardData>("/dashboard")
       .then((resposta) => setDados(resposta.data))
       .catch((error) => setErro(mensagemDeErro(error)))
       .finally(() => setCarregando(false));
   }, []);
 
-  if (carregando) {
-    return <p className="text-sm text-slate-500">Carregando indicadores...</p>;
-  }
+  const taxaOcupacao =
+    dados && dados.totalImoveis > 0
+      ? Math.round((dados.imoveisOcupados * 100) / dados.totalImoveis)
+      : 0;
 
-  if (erro || !dados) {
-    return (
-      <div className="cartao border-red-200 bg-red-50 p-6 text-sm text-red-700">
-        {erro || 'Nao foi possivel carregar o dashboard.'}
-      </div>
-    );
-  }
-
-  const taxaOcupacao = dados.totalImoveis > 0
-    ? Math.round((dados.imoveisOcupados * 100) / dados.totalImoveis)
-    : 0;
+  const indicadores = dados
+    ? [
+        {
+          titulo: "Imóveis ocupados",
+          valor: `${dados.imoveisOcupados}/${dados.totalImoveis}`,
+          legenda: `${taxaOcupacao}% de ocupação · ${dados.imoveisVagos} vago(s)`,
+        },
+        {
+          titulo: `Receita de aluguel (${formatMesReferencia(dados.mesReferencia)})`,
+          valor: brl(dados.receitaMes),
+          legenda: `${formatBRL(dados.pendentesMes)} em aberto no mês`,
+        },
+        {
+          titulo: "Contratos a vencer (90 dias)",
+          valor: String(dados.contratosAVencer),
+          legenda: `${dados.contratosAtivos} contrato(s) ativo(s) · requer atenção`,
+        },
+      ]
+    : [];
 
   return (
-    <div className="space-y-6">
-      {/* Cards de KPI */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <CardKPI
-          titulo="Ocupacao da carteira"
-          valor={`${dados.imoveisOcupados}/${dados.totalImoveis} ocupados`}
-          legenda={`${dados.imoveisVagos} imovel(is) vago(s) - ${taxaOcupacao}% de ocupacao`}
-          icone={Building2}
-          tom="verde"
-        />
-        <CardKPI
-          titulo={`Receita ${formatMesReferencia(dados.mesReferencia)}`}
-          valor={formatBRL(dados.receitaMes)}
-          legenda="Alugueis e taxas quitados no mes"
-          icone={Wallet}
-          tom="azul"
-        />
-        <CardKPI
-          titulo="Contratos a vencer"
-          valor={`${dados.contratosAVencer}`}
-          legenda={`${dados.contratosAtivos} contrato(s) ativo(s) - janela de 90 dias`}
-          icone={ClockAlert}
-          tom="ambar"
-        />
-        <CardKPI
-          titulo="Em aberto"
-          valor={formatBRL(dados.pendentesMes)}
-          legenda={`${dados.lancamentosPendentes} lancamento(s) pendente(s) ou atrasado(s)`}
-          icone={TrendingUp}
-          tom="vermelho"
-        />
+    <main style={{ padding: "28px 36px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 24,
+        }}
+      >
+        <div>
+          <h1 style={{ fontSize: 20, marginBottom: 2, color: "#1a1a2e" }}>
+            Dashboard
+          </h1>
+          <p style={{ color: "#999", fontSize: 12 }}>
+            Visão geral da carteira · {mesExtenso(dados?.mesReferencia)}
+          </p>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            border: "1px solid #e5e5ef",
+            borderRadius: 20,
+            padding: "4px 12px 4px 4px",
+            fontSize: 12,
+            color: "#555",
+          }}
+        >
+          <span
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: "50%",
+              background: "#4b3fd6",
+              display: "inline-block",
+            }}
+          />
+          {usuario?.role ?? "Usuário"}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        {/* Ultimos lancamentos */}
-        <section className="cartao overflow-hidden xl:col-span-2">
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">
-              Ultimos lancamentos
-            </h2>
-            <span className="text-xs text-slate-400">{dados.ultimosLancamentos.length} registros</span>
-          </div>
+      {carregando && (
+        <p style={{ color: "#999", fontSize: 13 }}>Carregando indicadores...</p>
+      )}
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead>
-                <tr>
-                  <th className="cabecalho-tabela">Referencia</th>
-                  <th className="cabecalho-tabela">Imovel</th>
-                  <th className="cabecalho-tabela">Locatario</th>
-                  <th className="cabecalho-tabela text-right">Valor</th>
-                  <th className="cabecalho-tabela">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {dados.ultimosLancamentos.length === 0 && (
-                  <tr>
-                    <td className="celula-tabela" colSpan={5}>
-                      Nenhum lancamento registrado.
-                    </td>
-                  </tr>
-                )}
-                {dados.ultimosLancamentos.map((lancamento) => (
-                  <tr key={lancamento.id} className="transition hover:bg-slate-50">
-                    <td className="celula-tabela whitespace-nowrap font-medium text-slate-800">
-                      {formatMesReferencia(lancamento.mesReferencia)}
-                    </td>
-                    <td className="celula-tabela">
-                      {lancamento.imovel.codigo}
-                      <span className="block text-xs text-slate-400">
-                        {lancamento.imovel.bairro}
-                      </span>
-                    </td>
-                    <td className="celula-tabela">
-                      {lancamento.locatario?.nome ?? '-'}
-                    </td>
-                    <td className="celula-tabela whitespace-nowrap text-right font-semibold text-slate-900">
-                      {formatBRL(lancamento.valorTotal)}
-                    </td>
-                    <td className="celula-tabela">
-                      <BadgeStatus texto={lancamento.status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+      {erro && (
+        <div
+          style={{
+            background: "#fdecec",
+            color: "#d63031",
+            borderRadius: 10,
+            padding: 16,
+            fontSize: 13,
+            marginBottom: 20,
+          }}
+        >
+          {erro}
+        </div>
+      )}
 
-        {/* Alertas */}
-        <section className="cartao overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4">
-            <AlertTriangle size={16} className="text-amber-500" />
-            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Alertas</h2>
-          </div>
-          <ul className="max-h-[420px] divide-y divide-slate-100 overflow-y-auto">
-            {dados.alertas.map((alerta, indice) => (
-              <li key={`${alerta.tipo}-${indice}`} className="flex gap-3 px-5 py-3">
-                <span
-                  className={[
-                    'mt-1 h-2.5 w-2.5 shrink-0 rounded-full',
-                    alerta.severidade === 'critico'
-                      ? 'bg-red-500'
-                      : alerta.severidade === 'atencao'
-                        ? 'bg-amber-500'
-                        : 'bg-blue-500',
-                  ].join(' ')}
-                />
-                <div>
-                  <p className="text-sm text-slate-700">{alerta.mensagem}</p>
-                </div>
-              </li>
+      {!carregando && !erro && dados && (
+        <>
+          <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
+            {indicadores.map((ind, i) => (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  border: "1px solid #e5e5ef",
+                  borderRadius: 10,
+                  padding: 16,
+                }}
+              >
+                <p style={{ fontSize: 12, color: "#999", marginBottom: 6 }}>
+                  {ind.titulo}
+                </p>
+                <h2
+                  style={{
+                    margin: "2px 0",
+                    fontWeight: 600,
+                    fontSize: 32,
+                    lineHeight: "100%",
+                    letterSpacing: "0.23px",
+                    color: "rgba(14, 26, 194, 0.5)",
+                  }}
+                >
+                  {ind.valor}
+                </h2>
+                <p style={{ fontSize: 11, color: "#aaa" }}>{ind.legenda}</p>
+              </div>
             ))}
-          </ul>
-        </section>
-      </div>
-    </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 14 }}>
+            <div
+              style={{
+                flex: 2,
+                border: "1px solid #e5e5ef",
+                borderRadius: 10,
+                padding: 16,
+                minWidth: 0,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 12,
+                }}
+              >
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>
+                  Últimos lançamentos financeiros
+                </h3>
+                <span
+                  style={{
+                    fontSize: 11,
+                    border: "1px solid #e5e5ef",
+                    borderRadius: 6,
+                    padding: "3px 10px",
+                    color: "#888",
+                  }}
+                >
+                  {formatMesReferencia(dados.mesReferencia)}
+                </span>
+              </div>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ color: "#999", fontSize: 12, textAlign: "left" }}>
+                    <th style={{ fontWeight: 400, paddingBottom: 8 }}>Imóvel</th>
+                    <th style={{ fontWeight: 400, paddingBottom: 8 }}>Locatário</th>
+                    <th style={{ fontWeight: 400, paddingBottom: 8 }}>Tipo</th>
+                    <th style={{ fontWeight: 400, paddingBottom: 8 }}>Valor</th>
+                    <th style={{ fontWeight: 400, paddingBottom: 8 }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dados.ultimosLancamentos.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        style={{
+                          padding: "16px 0",
+                          textAlign: "center",
+                          color: "#bbb",
+                          fontSize: 13,
+                        }}
+                      >
+                        Nenhum lançamento registrado.
+                      </td>
+                    </tr>
+                  )}
+                  {dados.ultimosLancamentos.map((l) => (
+                    <tr
+                      key={l.id}
+                      style={{
+                        fontSize: 13,
+                        color: "#999",
+                        borderTop: "1px solid #f0f0f5",
+                      }}
+                    >
+                      <td style={{ padding: "8px 0" }}>
+                        {l.imovel.codigo} · {l.imovel.endereco}
+                      </td>
+                      <td style={{ padding: "8px 0" }}>{l.locatario?.nome ?? "—"}</td>
+                      <td style={{ padding: "8px 0" }}>
+                        {l.natureza === "SAIDA" ? "Saída" : "Aluguel"}
+                      </td>
+                      <td style={{ padding: "8px 0" }}>{brl(l.valorTotal)}</td>
+                      <td style={{ padding: "8px 0" }}>
+                        <span
+                          style={{
+                            background: statusCores[l.status] ?? "#e4e0fb",
+                            color: "rgba(14, 26, 194, 0.5)",
+                            fontWeight: 600,
+                            borderRadius: 20,
+                            padding: "4px 12px",
+                            fontSize: 11,
+                          }}
+                        >
+                          {l.status.charAt(0) + l.status.slice(1).toLowerCase()}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              style={{
+                flex: 1,
+                border: "1px solid #e5e5ef",
+                borderRadius: 10,
+                padding: 16,
+              }}
+            >
+              <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: "#1a1a2e" }}>
+                Alertas
+              </h3>
+              {dados.alertas.length === 0 && (
+                <p style={{ fontSize: 12, color: "#aaa" }}>Nenhum alerta ativo.</p>
+              )}
+              {dados.alertas.map((a, i) => (
+                <div
+                  key={`${a.tipo}-${i}`}
+                  style={{
+                    background: a.severidade === "critico" ? "#fdecec" : "#f1f0ff",
+                    color:
+                      a.severidade === "critico"
+                        ? "#d63031"
+                        : "rgba(14, 26, 194, 0.5)",
+                    fontWeight: 600,
+                    padding: 10,
+                    borderRadius: 8,
+                    marginTop: 8,
+                    fontSize: 12,
+                  }}
+                >
+                  {a.mensagem}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </main>
   );
 }

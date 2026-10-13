@@ -1,37 +1,15 @@
-import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import Dashboard from './pages/Dashboard';
-import Financeiro from './pages/Financeiro';
-import ImoveisClientes from './pages/ImoveisClientes';
-import Contratos from './pages/Contratos';
-import RelatoriosMP from './pages/RelatoriosMP';
+import Layout from './components/layout';
+import Splash from './components/Splash';
 import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Imoveis from './pages/Imoveis';
+import Financeiro from './pages/Financeiro';
+import Contratos from './pages/Contratos';
+import ContratoDetalhe from './pages/ContratoDetalhe';
+import Relatorio from './pages/Relatorio';
 import { sessaoAtual } from './api/axios';
-
-const paginas: Record<string, { titulo: string; subtitulo: string }> = {
-  '/': {
-    titulo: 'Dashboard',
-    subtitulo: 'Visao geral da carteira de 124 imoveis da Fundacao Manuel Cruz',
-  },
-  '/financeiro': {
-    titulo: 'Financeiro',
-    subtitulo: 'Alugueis, recibos numerados, quitacoes e fluxo de caixa (RDD)',
-  },
-  '/imoveis': {
-    titulo: 'Imoveis e Clientes',
-    subtitulo: 'Carteira completa de imoveis e locatarios cadastrados',
-  },
-  '/contratos': {
-    titulo: 'Contratos',
-    subtitulo: 'Contratos digitalizados com alertas de vencimento',
-  },
-  '/relatorios': {
-    titulo: 'Relatorios MP-SE',
-    subtitulo: 'Prestacao de contas consolidada ao Ministerio Publico de Sergipe',
-  },
-};
 
 /** Protege as rotas privadas: sem sessao redireciona para /login. */
 function ExigirLogin({ children }: { children: ReactNode }) {
@@ -41,27 +19,11 @@ function ExigirLogin({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-/** Shell autenticado: sidebar escura + header + conteudo da rota. */
-function Layout() {
-  const { pathname } = useLocation();
-  const info = paginas[pathname] ?? { titulo: 'FORMACE', subtitulo: '' };
-
-  return (
-    <div className="flex h-screen overflow-hidden bg-page">
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Header titulo={info.titulo} subtitulo={info.subtitulo} />
-        <main className="flex-1 overflow-y-auto p-8">
-          <Outlet />
-        </main>
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
   return (
     <Routes>
+      {/* Splash de abertura (identidade visual nova) */}
+      <Route path="/" element={<Splash />} />
       <Route path="/login" element={<Login />} />
       <Route
         path="/"
@@ -71,13 +33,19 @@ export default function App() {
           </ExigirLogin>
         }
       >
-        <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="imoveis" element={<Imoveis />} />
         <Route path="financeiro" element={<Financeiro />} />
-        <Route path="imoveis" element={<ImoveisClientes />} />
         <Route path="contratos" element={<Contratos />} />
-        <Route path="relatorios" element={<RelatoriosMP />} />
+        <Route path="contratos/:id" element={<ContratoDetalhe />} />
+        <Route path="relatorio" element={<Relatorio />} />
       </Route>
+      {/* Rotas antigas mantidas para nao quebrar links salvos */}
+      <Route path="/relatorios" element={<Navigate to="/relatorio" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
+
+/** Rota inicial para quem ja esta logado (usada apos o login). */
+export const ROTA_INICIAL = '/dashboard';

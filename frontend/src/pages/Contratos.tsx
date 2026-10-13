@@ -1,369 +1,259 @@
-import { useCallback, useEffect, useState, type ChangeEvent } from 'react';
-import { ExternalLink, FileUp, Link2, RefreshCw } from 'lucide-react';
-import BadgeStatus from '../components/BadgeStatus';
-import Modal from '../components/Modal';
-import { api, baixarArquivo, mensagemDeErro } from '../api/axios';
-import { diasAte, formatBRL, formatData, rotuloVencimento } from '../utils/format';
-import type { Contrato, StatusContrato } from '../types';
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Button from "../components/Button";
+import NovoContrato from "../components/NovoContrato";
+import type { ContratoCriado } from "../components/NovoContrato";
+import { api, mensagemDeErro } from "../api/axios";
+import { formatMesReferencia } from "../utils/format";
+import { adicionarContrato, useContratosCriados } from "../store/contratosStore";
+import type { Contrato, Imovel, Locatario } from "../types";
 
-type Filtro = 'TODOS' | 'VENCENDO' | StatusContrato;
+const cardStyle = {
+  textDecoration: "none",
+  display: "block",
+  width: 190,
+  padding: "18px 12px",
+  textAlign: "center" as const,
+  background: "#fff",
+  border: "1px solid #ecebf7",
+  borderRadius: 10,
+  boxShadow: "0 2px 8px rgba(108, 92, 231, 0.12)",
+};
+
+const normalizar = (texto: string) =>
+  texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+
+/** Deriva bairro e cidade de um endereco digitado livremente. */
+function derivarBairroCidade(endereco: string): { bairro: string; cidade: string } {
+  const partes = endereco.split(/\s+[-–]\s+/);
+  const cauda = partes[partes.length - 1] ?? "";
+  const segmentos = cauda.split(",").map((s) => s.trim());
+
+  if (segmentos.length >= 2) {
+    return {
+      bairro: segmentos[0] || "Não informado",
+      cidade: (segmentos[segmentos.length - 1] || "").split("/")[0].trim() || "Não informada",
+    };
+  }
+  if (cauda.includes("/")) {
+    return {
+      bairro: "Não informado",
+      cidade: cauda.split("/")[0].trim() || "Não informada",
+    };
+  }
+  return { bairro: "Não informado", cidade: "Não informada" };
+}
 
 /**
- * Grid de contratos digitalizados com alertas de vencimento e envio/link do PDF.
+ * Contratos em grade (visual das telas novas): contratos da API e os gerados
+ * pelo assistente de contrato PDF.
  */
 export default function Contratos() {
-  const [contratos, setContratos] = useState<Contrato[]>([]);
-  const [filtro, setFiltro] = useState<Filtro>('TODOS');
-  const [erro, setErro] = useState('');
-  const [aviso, setAviso] = useState('');
+  const navigate = useNavigate();
+  const criados = useContratosCriados();
+  const [contratosApi, setContratosApi] = useState<Contrato[]>([]);
+  const [imoveis, setImoveis] = useState<Imovel[]>([]);
+  const [locatarios, setLocatarios] = useState<Locatario[]>([]);
+  const [criando, setCriando] = useState(false);
   const [carregando, setCarregando] = useState(true);
-
-  const [contratoLink, setContratoLink] = useState<Contrato | null>(null);
-  const [urlLink, setUrlLink] = useState('');
-  const [contratoUpload, setContratoUpload] = useState<Contrato | null>(null);
-  const [arquivo, setArquivo] = useState<File | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState("");
+  const [salvando, setSalvando] = useState(false);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
-    setErro('');
+    setErro("");
     try {
-      const params =
-        filtro === 'VENCENDO'
-          ? { vencendoDias: 90 }
-          : filtro === 'TODOS'
-            ? {}
-            : { status: filtro };
-      const resposta = await api.get<Contrato[]>('/contratos', { params });
-      setContratos(resposta.data);
+      const [respostaContratos, respostaImoveis, respostaLocatarios] =
+        await Promise.all([
+          api.get<Contrato[]>("/contratos"),
+          api.get<Imovel[]>("/imoveis"),
+          api.get<Locatario[]>("/locatarios"),
+        ]);
+      setContratosApi(respostaContratos.data);
+      setImoveis(respostaImoveis.data);
+      setLocatarios(respostaLocatarios.data);
     } catch (error) {
       setErro(mensagemDeErro(error));
     } finally {
       setCarregando(false);
     }
-  }, [filtro]);
+  }, []);
 
   useEffect(() => {
     void carregar();
   }, [carregar]);
 
-  async function abrirPdf(contrato: Contrato) {
-    setErro('');
+  /**
+   * Conclui o assistente: primeiro tenta registrar na API (locatário, imóvel e
+   * contrato). Se a API não responder, guarda localmente (comportamento do
+   * protótipo das telas novas).
+   */
+  async function concluir(c: ContratoCriado) {
+    setSalvando(true);
+    setErro("");
+    const [ano, mes] = c.vence.split("/");
     try {
-      const resposta = await api.get(`/contratos/${contrato.id}/pdf`, { responseType: 'blob' });
-      const objectUrl = URL.createObjectURL(resposta.data);
-      window.open(objectUrl, '_blank', 'noopener');
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
-    } catch {
-      if (contrato.pdfUrl) {
-        window.open(contrato.pdfUrl, '_blank', 'noopener');
-      } else {
-        setErro(`O contrato ${contrato.codigo} ainda nao possui PDF enviado ou link cadastrado.`);
+      const locatarioExistente = locatarios.find(
+        (l) => normalizar(l.nome) === normalizar(c.locatario),
+      );
+
+      // 1) locatário (se ainda não existir)
+      let locatarioId = locatarioExistente?.id;
+      if (!locatarioId) {
+        const resposta = await api.post<Locatario>("/locatarios", {
+          nome: c.locatario,
+          cpfCnpj: "A informar",
+          observacao: "Cadastrado pelo assistente de contrato PDF.",
+        });
+        locatarioId = resposta.data.id;
       }
-    }
-  }
 
-  function enviarLink() {
-    if (!contratoLink || !urlLink.trim()) return;
-    api
-      .put(`/contratos/${contratoLink.id}/pdf-link`, { pdfUrl: urlLink.trim() })
-      .then(() => {
-        setAviso(`Link do contrato ${contratoLink.codigo} atualizado.`);
-        setContratoLink(null);
-        setUrlLink('');
-        return carregar();
-      })
-      .catch((error) => setErro(mensagemDeErro(error)));
-  }
+      // 2) imóvel (reaproveita um cadastrado ou cria um novo)
+      const alvo = normalizar(c.imovel);
+      const imovelExistente = imoveis.find(
+        (i) =>
+          normalizar(`${i.endereco}${i.numero ?? ""}`).includes(alvo) ||
+          alvo.includes(normalizar(`${i.endereco}${i.numero ?? ""}`)) ||
+          normalizar(i.endereco) === alvo,
+      );
 
-  async function enviarArquivo(evento: ChangeEvent<HTMLInputElement>) {
-    const selecionado = evento.target.files?.[0];
-    if (!selecionado || !contratoUpload) return;
+      let imovelId = imovelExistente?.id;
+      if (!imovelId) {
+        const { bairro, cidade } = derivarBairroCidade(c.imovel);
+        const resposta = await api.post<Imovel>("/imoveis", {
+          codigo: `IM${String(Date.now()).slice(-6)}`.slice(0, 20),
+          endereco: c.imovel,
+          bairro,
+          cidade,
+          tipo: "Residencial",
+          valorAluguel: 0,
+          iptuMensal: 0,
+          status: "OCUPADO",
+          locatarioId,
+        });
+        imovelId = resposta.data.id;
+      }
 
-    setEnviando(true);
-    setErro('');
-    const dados = new FormData();
-    dados.append('file', selecionado);
-    try {
-      await api.post(`/contratos/${contratoUpload.id}/pdf`, dados, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      // 3) contrato
+      const dataFim = mes && ano ? `${ano}-${mes}-01` : new Date().toISOString().slice(0, 10);
+      const respostaContrato = await api.post<Contrato>("/contratos", {
+        imovelId,
+        locatarioId,
+        dataInicio: new Date().toISOString().slice(0, 10),
+        dataFim,
+        valorMensal: 1,
+        diaVencimento: 10,
+        observacao: "Contrato gerado pelo assistente de contrato PDF.",
       });
-      setAviso(`PDF do contrato ${contratoUpload.codigo} enviado com sucesso.`);
-      setContratoUpload(null);
-      setArquivo(null);
-      await carregar();
-    } catch (error) {
-      setErro(mensagemDeErro(error));
+
+      const id = String(respostaContrato.data.id);
+      // guarda o HTML assinado para a tela de detalhe exibir
+      adicionarContrato({ ...c, id });
+      setCriando(false);
+      navigate(`/contratos/${id}`);
+    } catch {
+      adicionarContrato(c);
+      setCriando(false);
+      navigate(`/contratos/${c.id}`);
     } finally {
-      setEnviando(false);
-      evento.target.value = '';
+      setSalvando(false);
     }
   }
 
-  function baixarPdf(contrato: Contrato) {
-    void baixarArquivo(`/contratos/${contrato.id}/pdf`, `${contrato.codigo}.pdf`).catch((error) =>
-      setErro(mensagemDeErro(error)),
-    );
-  }
+  const cardsApi = contratosApi.map((contrato) => ({
+    id: String(contrato.id),
+    locatario: contrato.locatario.nome,
+    vence: formatMesReferencia(contrato.dataFim),
+  }));
 
-  const vencendo = contratos.filter((contrato) => {
-    const dias = diasAte(contrato.dataFim);
-    return dias >= 0 && dias <= 90;
-  }).length;
+  const idsApi = new Set(cardsApi.map((c) => c.id));
+  const cardsLocais = criados
+    .filter((c) => !idsApi.has(c.id))
+    .map((c) => ({ id: c.id, locatario: c.locatario, vence: c.vence }));
+
+  const todos = [...cardsLocais, ...cardsApi];
 
   return (
-    <div className="space-y-6">
-      {/* Barra de filtros */}
-      <div className="cartao flex flex-wrap items-center justify-between gap-4 p-4">
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              ['TODOS', 'Todos'],
-              ['VENCENDO', `A vencer em 90 dias (${vencendo})`],
-              ['ATIVO', 'Ativos'],
-              ['VENCIDO', 'Vencidos'],
-              ['ENCERRADO', 'Encerrados'],
-            ] as Array<[Filtro, string]>
-          ).map(([valor, rotulo]) => (
-            <button
-              key={valor}
-              type="button"
-              onClick={() => setFiltro(valor)}
-              className={`rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
-                filtro === valor
-                  ? 'bg-slate-900 text-white'
-                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              {rotulo}
-            </button>
-          ))}
+    <main style={{ padding: "28px 36px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 24,
+        }}
+      >
+        <div>
+          <h1 style={{ fontSize: 20, marginBottom: 2, color: "#1a1a2e" }}>
+            Contratos
+          </h1>
+          <p style={{ color: "#999", fontSize: 12 }}>
+            Documentos digitalizados, sem arquivamento físico
+          </p>
         </div>
-
-        <button type="button" className="botao-secundario" onClick={() => void carregar()}>
-          <RefreshCw size={16} />
-          Atualizar
-        </button>
+        <Button variant="primary" onClick={() => setCriando(true)} disabled={salvando}>
+          + Novo contrato PDF
+        </Button>
       </div>
 
       {erro && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>
-      )}
-      {aviso && (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {aviso}
-        </p>
+        <div
+          style={{
+            background: "#fdecec",
+            color: "#d63031",
+            borderRadius: 10,
+            padding: 14,
+            fontSize: 13,
+            marginBottom: 16,
+          }}
+        >
+          {erro}
+        </div>
       )}
 
-      {/* Grid de contratos */}
       {carregando ? (
-        <p className="text-sm text-slate-500">Carregando contratos...</p>
-      ) : contratos.length === 0 ? (
-        <div className="cartao p-8 text-center text-sm text-slate-500">
-          Nenhum contrato encontrado para o filtro selecionado.
-        </div>
+        <p style={{ color: "#999", fontSize: 13 }}>Carregando contratos...</p>
+      ) : todos.length === 0 ? (
+        <p style={{ color: "#999", fontSize: 13 }}>
+          Nenhum contrato cadastrado. Use “+ Novo contrato PDF” para criar o
+          primeiro.
+        </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {contratos.map((contrato) => {
-            const dias = diasAte(contrato.dataFim);
-            const vencido = dias < 0;
-            const venceEmBreve = dias >= 0 && dias <= 90;
-
-            return (
-              <article key={contrato.id} className="cartao flex flex-col p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{contrato.codigo}</p>
-                    <p className="text-xs text-slate-400">
-                      {contrato.imovel.codigo} - {contrato.imovel.bairro}
-                    </p>
-                  </div>
-                  <BadgeStatus
-                    texto={contrato.status === 'ATIVO' ? 'Ativo' : contrato.status === 'VENCIDO' ? 'Vencido' : 'Encerrado'}
-                  />
-                </div>
-
-                <p className="mt-3 text-sm text-slate-700">{contrato.imovel.endereco}</p>
-                <p className="text-xs text-slate-500">
-                  Locatario: <span className="font-semibold">{contrato.locatario.nome}</span>
-                </p>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3 text-xs">
-                  <div>
-                    <p className="text-slate-400">Vigencia</p>
-                    <p className="font-semibold text-slate-700">
-                      {formatData(contrato.dataInicio)} ate {formatData(contrato.dataFim)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400">Valor mensal</p>
-                    <p className="font-semibold text-slate-700">{formatBRL(contrato.valorMensal)}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400">Vencimento</p>
-                    <p className="font-semibold text-slate-700">dia {contrato.diaVencimento}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400">PDF</p>
-                    <p className="font-semibold text-slate-700">
-                      {contrato.pdfNome ? 'enviado' : contrato.pdfUrl ? 'link' : 'pendente'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex flex-wrap gap-1.5">
-                    <BadgeStatus
-                      texto={rotuloVencimento(contrato.dataFim)}
-                      variante={vencido ? 'vermelho' : venceEmBreve ? 'laranja' : 'cinza'}
-                    />
-                    {venceEmBreve && <BadgeStatus texto="Vence em breve" variante="laranja" />}
-                  </div>
-                  <span className={`text-xs font-semibold ${vencido ? 'text-red-600' : 'text-slate-400'}`}>
-                    {vencido ? `vencido ha ${Math.abs(dias)}d` : `faltam ${dias}d`}
-                  </span>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-                  <button
-                    type="button"
-                    className="botao-secundario flex-1 px-3 py-1.5 text-xs"
-                    onClick={() => void abrirPdf(contrato)}
-                    title="Abrir o PDF digitalizado (ou o link cadastrado)"
-                  >
-                    <ExternalLink size={14} />
-                    Abrir PDF
-                  </button>
-                  <button
-                    type="button"
-                    className="botao-secundario flex-1 px-3 py-1.5 text-xs"
-                    onClick={() => {
-                      setContratoLink(contrato);
-                      setUrlLink(contrato.pdfUrl ?? '');
-                    }}
-                    title="Cadastrar link do PDF"
-                  >
-                    <Link2 size={14} />
-                    Link
-                  </button>
-                  <button
-                    type="button"
-                    className="botao-secundario flex-1 px-3 py-1.5 text-xs"
-                    onClick={() => {
-                      setContratoUpload(contrato);
-                      setArquivo(null);
-                    }}
-                    title="Enviar o PDF do contrato"
-                  >
-                    <FileUp size={14} />
-                    Enviar
-                  </button>
-                  <button
-                    type="button"
-                    className="botao-secundario px-3 py-1.5 text-xs"
-                    onClick={() => void baixarPdf(contrato)}
-                    title="Baixar o PDF armazenado"
-                  >
-                    Baixar
-                  </button>
-                </div>
-              </article>
-            );
-          })}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+          {todos.map((c) => (
+            <Link key={c.id} to={`/contratos/${c.id}`} style={cardStyle}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  margin: "0 auto 10px",
+                  background: "linear-gradient(90deg, #6c5ce7 50%, #cfcaf5 50%)",
+                }}
+              />
+              <p
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#1a1a2e",
+                  marginBottom: 4,
+                }}
+              >
+                {c.locatario}
+              </p>
+              <p style={{ fontSize: 11, color: "#999" }}>vence {c.vence}</p>
+            </Link>
+          ))}
         </div>
       )}
 
-      {/* Modal: link do PDF */}
-      <Modal
-        aberto={contratoLink !== null}
-        titulo={`Cadastrar link do PDF - ${contratoLink?.codigo ?? ''}`}
-        aoFechar={() => setContratoLink(null)}
-        rodape={
-          <>
-            <button type="button" className="botao-secundario" onClick={() => setContratoLink(null)}>
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className="botao-primario"
-              onClick={enviarLink}
-              disabled={!urlLink.trim()}
-            >
-              Salvar link
-            </button>
-          </>
-        }
-      >
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-600">URL do PDF</label>
-          <input
-            type="url"
-            className="input-padrao"
-            placeholder="https://.../contrato-digitalizado.pdf"
-            value={urlLink}
-            onChange={(evento) => setUrlLink(evento.target.value)}
-          />
-          <p className="mt-2 text-[11px] text-slate-400">
-            O link abre em nova aba junto com o contrato digitalizado.
-          </p>
-        </div>
-      </Modal>
-
-      {/* Modal: upload do PDF */}
-      <Modal
-        aberto={contratoUpload !== null}
-        titulo={`Enviar PDF do contrato - ${contratoUpload?.codigo ?? ''}`}
-        aoFechar={() => setContratoUpload(null)}
-        rodape={
-          <>
-            <button type="button" className="botao-secundario" onClick={() => setContratoUpload(null)}>
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className="botao-primario"
-              onClick={() => {
-                const input = document.getElementById('input-pdf-contrato') as HTMLInputElement | null;
-                input?.click();
-              }}
-              disabled={!arquivo || enviando}
-            >
-              <FileUp size={16} />
-              {enviando ? 'Enviando...' : 'Enviar arquivo'}
-            </button>
-          </>
-        }
-      >
-        <div className="space-y-3">
-          <input
-            id="input-pdf-contrato"
-            type="file"
-            accept="application/pdf"
-            className="hidden"
-            onChange={(evento) => {
-              const arquivoSelecionado = evento.target.files?.[0] ?? null;
-              setArquivo(arquivoSelecionado);
-            }}
-          />
-          <button
-            type="button"
-            className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 px-6 py-10 text-sm text-slate-500 transition hover:border-slate-400 hover:bg-slate-50"
-            onClick={() => {
-              const input = document.getElementById('input-pdf-contrato') as HTMLInputElement | null;
-              input?.click();
-            }}
-          >
-            <FileUp size={24} />
-            Clique para selecionar o PDF do contrato (max. 20MB)
-          </button>
-          {arquivo && (
-            <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
-              Arquivo selecionado: <span className="font-semibold">{arquivo.name}</span> (
-              {(arquivo.size / 1024).toFixed(0)} KB)
-            </p>
-          )}
-        </div>
-      </Modal>
-    </div>
+      {criando && (
+        <NovoContrato onClose={() => setCriando(false)} onConcluir={concluir} />
+      )}
+    </main>
   );
 }

@@ -1,83 +1,154 @@
-import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  Building2,
-  FileBarChart2,
-  FileText,
-  LayoutDashboard,
-  LogOut,
-  Wallet,
-} from 'lucide-react';
-import { encerrarSessao } from '../api/axios';
+import { Link, useNavigate } from "react-router-dom";
+import logo from "../assets/logo.png";
+import fundo from "../assets/fundo.png";
+import { encerrarSessao, sessaoAtual } from "../api/axios";
 
-const itens = [
-  { to: '/', rotulo: 'Dashboard', icone: LayoutDashboard, fim: true },
-  { to: '/financeiro', rotulo: 'Financeiro', icone: Wallet, fim: false },
-  { to: '/imoveis', rotulo: 'Imoveis e Clientes', icone: Building2, fim: false },
-  { to: '/contratos', rotulo: 'Contratos', icone: FileText, fim: false },
-  { to: '/relatorios', rotulo: 'Relatorios MP-SE', icone: FileBarChart2, fim: false },
+const menuItems = [
+  {
+    nome: "Dashboard",
+    rota: "/dashboard",
+    icone: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3z" />
+      </svg>
+    ),
+  },
+  {
+    nome: "Imóveis e clientes",
+    rota: "/imoveis",
+    icone: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 20c0-4 4-6 8-6s8 2 8 6v1H4z" />
+      </svg>
+    ),
+  },
+  {
+    nome: "Financeiro",
+    rota: "/financeiro",
+    icone: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-1.05a3 3 0 01-2-2.83h2a1 1 0 001 1h1a1 1 0 000-2h-1a3 3 0 010-6V5h2v1.05a3 3 0 012 2.83h-2a1 1 0 00-1-1h-1a1 1 0 000 2h1a3 3 0 010 6z" />
+      </svg>
+    ),
+  },
+  {
+    nome: "Contratos",
+    rota: "/contratos",
+    icone: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 2h9l5 5v15a1 1 0 01-1 1H6a1 1 0 01-1-1V3a1 1 0 011-1zm8 6V4l4 4h-4z" />
+      </svg>
+    ),
+  },
+  {
+    nome: "Relatório/MP",
+    rota: "/relatorio",
+    icone: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M4 4h16v3H4zM4 10h16v2H4zM4 15h10v2H4zM4 19h7v1H4z" />
+      </svg>
+    ),
+  },
 ];
 
+interface SidebarProps {
+  usuario: string;
+  ativo?: string;
+}
+
 /**
- * Navegacao lateral escura (degradê #101828 -> #1E293B), alinhada ao layout do Figma.
+ * Navegacao lateral escura (imagem de fundo + sobreposicao), conforme o layout
+ * das telas novas. O botao de saida encerra a sessao JWT.
  */
-export default function Sidebar() {
+function Sidebar({ usuario, ativo = "Dashboard" }: SidebarProps) {
   const navigate = useNavigate();
 
   function sair() {
     encerrarSessao();
-    navigate('/login');
+    navigate("/login");
   }
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col bg-gradient-to-b from-[#101828] to-[#1E293B] text-slate-200">
-      <div className="flex items-center gap-3 px-6 py-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
-          <Building2 size={22} className="text-white" />
-        </div>
-        <div>
-          <p className="text-lg font-bold leading-tight text-white">FORMACE</p>
-          <p className="text-[11px] leading-tight text-slate-400">Fundacao Manuel Cruz</p>
-        </div>
+    <aside
+      style={{
+        width: 260,
+        minHeight: "100vh",
+        padding: "32px 24px",
+        color: "#fff",
+        fontFamily: "'Nunito', sans-serif",
+        backgroundImage: `linear-gradient(to bottom, rgba(10,14,40,0.9), rgba(10,14,40,0.85)), url(${fundo})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        display: "flex",
+        flexDirection: "column",
+        flexShrink: 0,
+      }}
+    >
+      <div style={{ marginBottom: 32 }}>
+        <img src={logo} alt="Formace" style={{ width: 190 }} />
       </div>
-
-      <nav className="mt-2 flex-1 space-y-1 px-3">
-        <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-          Gestao
-        </p>
-        {renderizarItens()}
+      <p style={{ opacity: 0.9, marginBottom: 32, fontSize: 18, lineHeight: 1.4 }}>
+        Bem vindo,
+        <br />
+        {usuario}
+      </p>
+      <nav style={{ display: "flex", flexDirection: "column" }}>
+        {menuItems.map((item) => (
+          <Link
+            key={item.nome}
+            to={item.rota}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              padding: "14px 10px",
+              color: "#fff",
+              textDecoration: "none",
+              opacity: item.nome === ativo ? 1 : 0.65,
+              fontWeight: item.nome === ativo ? 600 : 400,
+              borderLeft:
+                item.nome === ativo ? "4px solid #fff" : "4px solid transparent",
+              fontSize: 16,
+            }}
+          >
+            {item.icone}
+            <span>{item.nome}</span>
+          </Link>
+        ))}
       </nav>
 
-      <div className="border-t border-white/10 p-3">
-        <button
-          type="button"
-          onClick={sair}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"
-        >
-          <LogOut size={18} />
-          Sair do sistema
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={sair}
+        style={{
+          marginTop: "auto",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "12px 10px",
+          background: "none",
+          border: "none",
+          borderTop: "1px solid rgba(255,255,255,0.15)",
+          color: "#fff",
+          opacity: 0.75,
+          fontSize: 14,
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M10 3H5a2 2 0 00-2 2v14a2 2 0 002 2h5v-2H5V5h5V3zm6.6 5.6L15.2 10l1.4 1.4H9v2h7.6L15.2 15l1.4 1.4L20 13l-3.4-3.4z" />
+        </svg>
+        Sair do sistema
+      </button>
     </aside>
   );
 }
 
-function renderizarItens() {
-  return itens.map(({ to, rotulo, icone: Icone, fim }) => (
-    <NavLink
-      key={to}
-      to={to}
-      end={fim}
-      className={({ isActive }) =>
-        [
-          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition',
-          isActive
-            ? 'bg-white/10 text-white shadow-inner'
-            : 'text-slate-300 hover:bg-white/5 hover:text-white',
-        ].join(' ')
-      }
-    >
-      <Icone size={18} />
-      {rotulo}
-    </NavLink>
-  ));
+export default Sidebar;
+
+/** Nome exibido no topo da barra lateral (sessao JWT). */
+export function usuarioDaSessao(): string {
+  return sessaoAtual()?.nome ?? sessaoAtual()?.username ?? "Usuário";
 }
