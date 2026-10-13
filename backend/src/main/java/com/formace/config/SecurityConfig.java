@@ -74,7 +74,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+        // Padroes (e nao origens exatas) para que o dev server do Vite possa subir em
+        // qualquer porta (3000, 3001, 5173...) sem derrubar o login com 403.
+        // Fora de localhost a lista continua restrita as origens configuradas.
+        config.setAllowedOriginPatterns(Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
                 .toList());
