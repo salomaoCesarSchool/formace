@@ -29,3 +29,6 @@ master.zip
 # Env
 .env
 .env.local
+
+# Frontend embutido no jar (gerado apenas no build Docker/deploy)
+backend/src/main/resources/static/

@@ -1,0 +1,23 @@
+# Pastas/arquivos que nao entram no contexto de build do Docker
+.git
+.gitignore
+
+# build artifacts
+backend/target/
+frontend/node_modules/
+frontend/dist/
+
+# midias e docs que nao sao necessarios no container
+telas novas/
+*.md
+master.zip
+
+# infra local (o Render usa o Dockerfile, nao o compose)
+docker-compose.yml
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.iml
