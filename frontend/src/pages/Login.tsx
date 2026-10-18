@@ -159,8 +159,9 @@ function CampoSenha({
 
 /**
  * Autenticacao (JWT) com o visual das telas novas: abas Login/Cadastro/Esqueci.
- * O login conversa com POST /api/auth/login; cadastro e redefinicao de senha
- * aguardam endpoint proprio no backend.
+ * Login e cadastro conversam com a API (POST /auth/login e POST /auth/cadastro);
+ * o "Esqueci" pede o link por POST /auth/esqueci-senha e a troca da senha
+ * acontece na rota /redefinir-senha.
  */
 function Login() {
   const navigate = useNavigate();
@@ -193,8 +194,16 @@ function Login() {
     if (modo === "esqueci") {
       setErros(e);
       if (Object.keys(e).length > 0) return;
-      // O backend ainda nao expoe endpoint de redefinicao de senha.
-      setLinkEnviado(true);
+      setCarregando(true);
+      try {
+        // POST /auth/esqueci-senha: gera o link expiravel e envia por e-mail
+        await api.post("/auth/esqueci-senha", { username: usuario });
+        setLinkEnviado(true);
+      } catch (error) {
+        setErros({ geral: mensagemDeErro(error) });
+      } finally {
+        setCarregando(false);
+      }
       return;
     }
 
@@ -210,9 +219,21 @@ function Login() {
     if (Object.keys(e).length > 0) return;
 
     if (modo === "cadastro") {
-      setAviso(
-        "O cadastro de novos usuários será liberado quando o backend publicar o endpoint de registro (POST /auth/cadastro).",
-      );
+      setCarregando(true);
+      setErros({});
+      try {
+        // POST /auth/cadastro cria o usuario (ROLE_USER) e ja devolve o JWT
+        const { data } = await api.post<AuthResponse>("/auth/cadastro", {
+          username: usuario,
+          password: senha,
+        });
+        salvarSessao(data.token, data.username, data.nome, data.role);
+        navigate("/dashboard", { replace: true });
+      } catch (error) {
+        setErros({ geral: mensagemDeErro(error) });
+      } finally {
+        setCarregando(false);
+      }
       return;
     }
 
@@ -323,9 +344,10 @@ function Login() {
                   lineHeight: 1.5,
                 }}
               >
-                Solicitação registrada para <b>{email.trim()}</b>. O envio do link
-                de nova senha será ativado quando o backend publicar o endpoint de
-                recuperação.
+                Solicitação registrada para <b>{email.trim()}</b>. Se existir uma
+                conta com esse e-mail, você receberá uma mensagem com o link para
+                criar uma nova senha (vale por 30 minutos). Não esqueça de
+                conferir a caixa de spam.
               </div>
               <div style={{ display: "flex", justifyContent: "center", marginTop: 22 }}>
                 <Button
@@ -394,7 +416,9 @@ function Login() {
                   }}
                 >
                   {carregando
-                    ? "Autenticando..."
+                    ? modo === "esqueci"
+                      ? "Enviando..."
+                      : "Autenticando..."
                     : modo === "login"
                       ? "Login"
                       : modo === "cadastro"

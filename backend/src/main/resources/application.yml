@@ -27,6 +27,23 @@ spring:
 
   jpa.defer-datasource-initialization: true
 
+  # Envio de e-mail (recuperacao de senha) — credenciais por variavel de ambiente
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+          starttls:
+            enable: true
+            required: true
+
   sql:
     init:
       mode: always
@@ -49,6 +66,9 @@ app:
     expiration-ms: 86400000
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*,http://192.168.*.*:*,http://10.*.*.*:*}
+  frontend:
+    # base do link de recuperacao de senha enviado por e-mail
+    base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
   fundacao:
     nome: Fundacao Manuel Cruz
     cnpj: "32.104.587/0001-90"
@@ -59,6 +79,10 @@ management:
     web:
       exposure:
         include: health,info
+  health:
+    mail:
+      # SMTP sem credenciais nao pode derrubar o health check (Render usa /actuator/health)
+      enabled: false
 
 logging:
   level:

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import Layout from './components/layout';
 import Splash from './components/Splash';
 import Login from './pages/Login';
+import RedefinirSenha from './pages/RedefinirSenha';
 import Dashboard from './pages/Dashboard';
 import Imoveis from './pages/Imoveis';
 import Financeiro from './pages/Financeiro';
@@ -25,6 +26,8 @@ export default function App() {
       {/* Splash de abertura (identidade visual nova) */}
       <Route path="/" element={<Splash />} />
       <Route path="/login" element={<Login />} />
+      {/* Redefinicao de senha pelo link enviado por e-mail */}
+      <Route path="/redefinir-senha" element={<RedefinirSenha />} />
       <Route
         path="/"
         element={

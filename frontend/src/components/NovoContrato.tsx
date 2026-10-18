@@ -340,12 +340,14 @@ function Assinar({
   onChange,
   bloqueado,
   aviso,
+  erro,
 }: {
   titulo: string;
   valor: string;
   onChange: (img: string) => void;
   bloqueado?: boolean;
   aviso?: string;
+  erro?: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const desenhando = useRef(false);
@@ -373,7 +375,8 @@ function Assinar({
   return (
     <div
       style={{
-        border: "1px solid #e5e5ef",
+        border: erro ? "1px solid #d63031" : "1px solid #e5e5ef",
+        background: erro ? "#fff5f5" : undefined,
         borderRadius: 10,
         padding: 12,
         opacity: bloqueado ? 0.5 : 1,
@@ -384,11 +387,11 @@ function Assinar({
           display: "flex",
           justifyContent: "space-between",
           fontSize: 12,
-          color: "#555",
+          color: erro ? "#d63031" : "#555",
           marginBottom: 6,
         }}
       >
-        <span>{titulo}</span>
+        <span>{titulo}{erro ? " — falta assinar" : ""}</span>
         {valor && !bloqueado && (
           <button
             type="button"
@@ -499,6 +502,8 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
   const [passo, setPasso] = useState(0);
   const [d, setD] = useState<Dados>({ ...vazio, imovel: imovel ?? "" });
   const [erro, setErro] = useState("");
+  // campos inválidos (faltando ou com valor errado) destacados em vermelho
+  const [camposErr, setCamposErr] = useState<Record<string, boolean>>({});
   const [ass, setAss] = useState<Assinaturas>({
     locatario: "",
     fiador: "",
@@ -520,11 +525,25 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
   const set = (k: keyof Dados) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setD({ ...d, [k]: e.target.value });
     setErro("");
+    // digitar no campo remove o destaque vermelho dele
+    if (camposErr[k]) setCamposErr((c) => ({ ...c, [k]: false }));
   };
   const campo = (
     k: keyof Dados,
     props: { placeholder?: string; type?: string } = {},
-  ) => <Input value={d[k]} onChange={set(k)} style={largo} {...props} />;
+  ) => (
+    <Input
+      value={d[k]}
+      onChange={set(k)}
+      style={{
+        ...largo,
+        ...(camposErr[k]
+          ? { border: "1px solid #d63031", background: "#fff5f5" }
+          : null),
+      }}
+      {...props}
+    />
+  );
 
   const html = contratoHTML(d, ass);
 
@@ -546,22 +565,52 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
       ["enderecoFiador", "o endereço do fiador"],
       ["emailFiador", "o e-mail do fiador"],
     ];
+
+    // marca TODOS os campos com problema (faltando ou formato errado)
+    const novos: Record<string, boolean> = {};
+    const faltando: string[] = [];
     for (const [k, nome] of obrig) {
-      if (!d[k].trim()) return `Informe ${nome}.`;
+      if (!d[k].trim()) {
+        novos[k] = true;
+        faltando.push(nome);
+      }
     }
-    if (temConjuge && (!d.rgConjuge.trim() || !d.cpfConjuge.trim()))
-      return "Informe o documento e o CPF do cônjuge do fiador.";
-    if (numero(d.aluguel) <= 0) return "O aluguel precisa ser maior que zero.";
+    const conjugeIncompleto =
+      temConjuge && (!d.rgConjuge.trim() || !d.cpfConjuge.trim());
+    if (conjugeIncompleto) {
+      if (!d.rgConjuge.trim()) novos.rgConjuge = true;
+      if (!d.cpfConjuge.trim()) novos.cpfConjuge = true;
+    }
+    const aluguelInvalido = numero(d.aluguel) <= 0;
+    if (aluguelInvalido) novos.aluguel = true;
     const dia = Number(d.diaVencimento);
-    if (!Number.isInteger(dia) || dia < 1 || dia > 31)
-      return "O dia de vencimento deve ser entre 1 e 31.";
+    const diaInvalido =
+      !d.diaVencimento.trim() || !Number.isInteger(dia) || dia < 1 || dia > 31;
+    if (diaInvalido) novos.diaVencimento = true;
     const prazo = Number(d.prazoMeses);
-    if (!Number.isInteger(prazo) || prazo < 1 || prazo > 999)
-      return "O prazo deve ser um número de meses.";
-    if (
-      !/\S+@\S+\.\S+/.test(d.emailLocatario) ||
-      !/\S+@\S+\.\S+/.test(d.emailFiador)
-    )
+    const prazoInvalido =
+      !d.prazoMeses.trim() || !Number.isInteger(prazo) || prazo < 1 || prazo > 999;
+    if (prazoInvalido) novos.prazoMeses = true;
+    const emailLocatarioInvalido = !/\S+@\S+\.\S+/.test(d.emailLocatario);
+    const emailFiadorInvalido = !/\S+@\S+\.\S+/.test(d.emailFiador);
+    if (emailLocatarioInvalido) novos.emailLocatario = true;
+    if (emailFiadorInvalido) novos.emailFiador = true;
+
+    setCamposErr(novos);
+
+    if (faltando.length > 0) {
+      return `Informe ${faltando[0]}.${
+        faltando.length > 1
+          ? ` Mais ${faltando.length - 1} campo(s) destacado(s) em vermelho.`
+          : ""
+      }`;
+    }
+    if (conjugeIncompleto)
+      return "Informe o documento e o CPF do cônjuge do fiador.";
+    if (aluguelInvalido) return "O aluguel precisa ser maior que zero.";
+    if (diaInvalido) return "O dia de vencimento deve ser entre 1 e 31.";
+    if (prazoInvalido) return "O prazo deve ser um número de meses.";
+    if (emailLocatarioInvalido || emailFiadorInvalido)
       return "Confira os e-mails.";
     return "";
   };
@@ -572,19 +621,28 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
       if (e) return setErro(e);
     }
     if (passo === 2) {
-      if (
-        !ass.locatario ||
-        !ass.fiador ||
-        (temConjuge && !ass.conjuge) ||
-        !ass.fundacao
-      )
-        return setErro("Faltam assinaturas.");
-      if (!firmas)
+      const semAssinatura: Record<string, boolean> = {};
+      if (!ass.locatario) semAssinatura.assLocatario = true;
+      if (!ass.fiador) semAssinatura.assFiador = true;
+      if (temConjuge && !ass.conjuge) semAssinatura.assConjuge = true;
+      if (!ass.fundacao) semAssinatura.assFundacao = true;
+      if (Object.keys(semAssinatura).length > 0) {
+        setCamposErr(semAssinatura);
+        return setErro(
+          temConjuge && !ass.conjuge
+            ? "Faltam assinaturas (locatário, fiador e cônjuge) — os campos em vermelho."
+            : "Faltam assinaturas — os campos em vermelho.",
+        );
+      }
+      if (!firmas) {
+        setCamposErr({ firmas: true });
         return setErro(
           "Confirme que as firmas foram reconhecidas em cartório.",
         );
+      }
     }
     setErro("");
+    setCamposErr({});
     setPasso(passo + 1);
   };
 
@@ -765,24 +823,40 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
             <Assinar
               titulo={`Locatário — ${d.locatario}`}
               valor={ass.locatario}
-              onChange={(img) => setAss({ ...ass, locatario: img })}
+              erro={camposErr.assLocatario}
+              onChange={(img) => {
+                setAss({ ...ass, locatario: img });
+                setCamposErr((c) => ({ ...c, assLocatario: false }));
+              }}
             />
             <Assinar
               titulo={`Fiador — ${d.fiador}`}
               valor={ass.fiador}
-              onChange={(img) => setAss({ ...ass, fiador: img })}
+              erro={camposErr.assFiador}
+              onChange={(img) => {
+                setAss({ ...ass, fiador: img });
+                setCamposErr((c) => ({ ...c, assFiador: false }));
+              }}
             />
             {temConjuge && (
               <Assinar
                 titulo={`Cônjuge do fiador — ${d.conjuge}`}
                 valor={ass.conjuge}
-                onChange={(img) => setAss({ ...ass, conjuge: img })}
+                erro={camposErr.assConjuge}
+                onChange={(img) => {
+                  setAss({ ...ass, conjuge: img });
+                  setCamposErr((c) => ({ ...c, assConjuge: false }));
+                }}
               />
             )}
             <Assinar
               titulo="Locadora — Fundação Manuel Cruz"
               valor={ass.fundacao}
-              onChange={(img) => setAss({ ...ass, fundacao: img })}
+              erro={camposErr.assFundacao}
+              onChange={(img) => {
+                setAss({ ...ass, fundacao: img });
+                setCamposErr((c) => ({ ...c, assFundacao: false }));
+              }}
               bloqueado={faltaAlguem}
               aviso={
                 faltaAlguem
@@ -791,7 +865,12 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
               }
             />
             <label
-              style={{ fontSize: 12, color: "#555", display: "flex", gap: 8 }}
+              style={{
+                fontSize: 12,
+                color: camposErr.firmas ? "#d63031" : "#555",
+                display: "flex",
+                gap: 8,
+              }}
             >
               <input
                 type="checkbox"
@@ -799,6 +878,8 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
                 onChange={(e) => {
                   setFirmas(e.target.checked);
                   setErro("");
+                  if (camposErr.firmas)
+                    setCamposErr((c) => ({ ...c, firmas: false }));
                 }}
               />
               Firma do locatário e do fiador reconhecida em cartório
@@ -870,7 +951,12 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => (passo === 0 ? onClose() : setPasso(passo - 1))}
+            onClick={() => {
+              setErro("");
+              setCamposErr({});
+              if (passo === 0) onClose();
+              else setPasso(passo - 1);
+            }}
           >
             {passo === 0 ? "Cancelar" : "Voltar"}
           </Button>
