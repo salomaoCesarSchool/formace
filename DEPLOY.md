@@ -21,13 +21,15 @@ Navegador ──> https://seu-app.onrender.com
    - **Name**: `formace` (ou o que preferir)
    - **Database password**: gere uma senha forte e **guarde** (ex.: no gerenciador
      de senhas). Esquecer a senha obriga a resetar o banco.
-   - **Region**: **South America (São Paulo)** — mais perto do Render e do Brasil
+   - **Region**: a que estiver disponível (ex.: **South America (São Paulo)**
+     ou **East US (Ohio)**). **Anote a região** — ela forma o endereço de
+     conexão `aws-0-[REGIAO].pooler.supabase.com`
 3. Aguarde ~2 minuto criar o projeto.
 4. Pegue os dados da conexão: **Connect** (ou **Database** → **Connection
    string**) → aba **URI** (usar o **pooler**, porta **6543**). O formato é:
 
    ```
-   postgresql://postgres.[SEU-REF]:SENHA@aws-0-sa-east-1.pooler.supabase.com:6543/postgres
+   postgresql://postgres.[SEU-REF]:SENHA@aws-0-[REGIAO].pooler.supabase.com:6543/postgres
    ```
 
    Anote: **host**, **senha** e o usuário `postgres.[SEU-REF]`.
@@ -66,8 +68,8 @@ git push origin main  # se houver commits novos
 
    | Variável | Valor |
    |---|---|
-   | `DB_URL` | `jdbc:postgresql://aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0` |
-   | `DB_USER` | `postgres.[SEU-REF]` (o usuário do pooler, com o sufixo) |
+   | `DB_URL` | `jdbc:postgresql://HOST-DO-POOLER:6543/postgres?sslmode=require&prepareThreshold=0` — o host é `aws-0-[REGIAO].pooler.supabase.com` e **deve ser exatamente o da tela Connect do seu projeto** (ex.: `us-east-2`, `sa-east-1`...). Copie de lá, não use o exemplo |
+   | `DB_USER` | `postgres.[SEU-REF]` (o usuário do pooler, com o sufixo, também visível na tela Connect) |
    | `DB_PASSWORD` | a senha do banco que você criou no Supabase |
    | `JWT_SECRET` | um segredo longo e único, ex.: gere com `openssl rand -hex 48` |
    | `FRONTEND_BASE_URL` | a URL pública do app, ex.: `https://formace-abc123.onrender.com` (usada no link de recuperação de senha) |
