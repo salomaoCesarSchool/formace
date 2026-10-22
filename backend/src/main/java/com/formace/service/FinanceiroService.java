@@ -34,7 +34,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -136,7 +135,7 @@ public class FinanceiroService {
         if (temStatus) {
             return lancamentoRepository.findByStatusOrderByDataVencimentoAsc(statusEnum);
         }
-        return lancamentoRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        return lancamentoRepository.buscarTodosDecrescente();
     }
 
     @Transactional(readOnly = true)

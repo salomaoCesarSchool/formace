@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,7 +29,10 @@ import java.time.LocalDateTime;
  * Contrato de locacao digitalizado (com upload ou link do PDF).
  */
 @Entity
-@Table(name = "contrato")
+@Table(name = "contrato", indexes = {
+        @Index(name = "idx_contrato_status_fim", columnList = "status, dataFim"),
+        @Index(name = "idx_contrato_imovel", columnList = "imovel_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -43,11 +47,11 @@ public class Contrato {
     @Column(name = "codigo", nullable = false, unique = true, length = 20)
     private String codigo;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "imovel_id", nullable = false)
     private Imovel imovel;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "locatario_id", nullable = false)
     private Locatario locatario;
 

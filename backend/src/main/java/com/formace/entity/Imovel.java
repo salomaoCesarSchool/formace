@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,7 +27,10 @@ import java.time.LocalDateTime;
  * Imovel da carteira da Fundacao Manuel Cruz (124 unidades).
  */
 @Entity
-@Table(name = "imovel")
+@Table(name = "imovel", indexes = {
+        @Index(name = "idx_imovel_status", columnList = "status"),
+        @Index(name = "idx_imovel_locatario", columnList = "locatario_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -76,7 +80,7 @@ public class Imovel {
     @Column(name = "status", nullable = false, length = 20)
     private StatusImovel status;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "locatario_id")
     private Locatario locatario;
 

@@ -16,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,7 +32,12 @@ import java.time.LocalDateTime;
  * Lancamento financeiro (aluguel, IPTU, despesas) com multa/juros por atraso.
  */
 @Entity
-@Table(name = "lancamento_financeiro")
+@Table(name = "lancamento_financeiro", indexes = {
+        @Index(name = "idx_lanc_mes", columnList = "mesReferencia"),
+        @Index(name = "idx_lanc_status", columnList = "status"),
+        @Index(name = "idx_lanc_imovel", columnList = "imovel_id"),
+        @Index(name = "idx_lanc_locatario", columnList = "locatario_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -43,15 +49,15 @@ public class LancamentoFinanceiro {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "imovel_id", nullable = false)
     private Imovel imovel;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "locatario_id")
     private Locatario locatario;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contrato_id")
     private Contrato contrato;
 
@@ -95,7 +101,7 @@ public class LancamentoFinanceiro {
     @Column(name = "descricao", length = 300)
     private String descricao;
 
-    @OneToOne(mappedBy = "lancamento", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToOne(mappedBy = "lancamento", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Recibo recibo;
 
     @Column(name = "criado_em", updatable = false)

@@ -11,6 +11,7 @@ import com.formace.repository.ContratoRepository;
 import com.formace.repository.ImovelRepository;
 import com.formace.repository.LancamentoFinanceiroRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,7 +51,7 @@ public class DashboardService {
                 .findByStatusAndDataFimGreaterThanEqualAndDataFimLessThanEqualOrderByDataFimAsc(
                         StatusContrato.ATIVO, hoje, hoje.plusDays(DIAS_ALERTA_VENCIMENTO));
 
-        long contratosAtivos = contratoRepository.findByStatusOrderByDataFimAsc(StatusContrato.ATIVO).size();
+        long contratosAtivos = contratoRepository.countByStatus(StatusContrato.ATIVO);
 
         BigDecimal receitaMes = financeiroService.receitaDoMes(mes);
         BigDecimal pendentesMes = financeiroService.pendentesDoMes(mes);
@@ -59,7 +60,8 @@ public class DashboardService {
                 StatusLancamento.PENDENTE, NaturezaLancamento.ENTRADA)
                 + lancamentoRepository.countByStatusAndNatureza(StatusLancamento.ATRASADO, NaturezaLancamento.ENTRADA);
 
-        List<LancamentoFinanceiro> ultimos = lancamentoRepository.findTop10ByOrderByIdDesc();
+        List<LancamentoFinanceiro> ultimos = lancamentoRepository
+                .buscarRecentes(PageRequest.of(0, 10));
 
         List<DashboardResponse.Alerta> alertas = new ArrayList<>();
         alertas.add(new DashboardResponse.Alerta(
