@@ -34,21 +34,21 @@ spring:
   # Envio de e-mail (recuperacao de senha) — credenciais por variavel de ambiente
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:465}
+    port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
           auth: true
-          ssl:
-            enable: true
+          #ssl:
+            #enable: true
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
-        # starttls:
-           # enable: true
-           # required: true
+          starttls:
+            enable: true
+            required: true
 
   sql:
     init:
