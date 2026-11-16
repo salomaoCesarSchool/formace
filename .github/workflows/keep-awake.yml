@@ -1,0 +1,53 @@
+# =====================================================================
+# Mantém o site online no Render (plano free)
+# ---------------------------------------------------------------------
+# O Render suspende o serviço após 15 minutos sem acesso. Como qualquer
+# código DENTRO do Render também fica suspenso, este ping roda FORA,
+# no GitHub Actions, a cada 10 minutos.
+#
+# O ping em /actuator/health:
+#   1. Impede a suspensão do Render (todo request HTTP conta como acesso);
+#   2. Acorda o servidor caso esteja dormindo (o próprio request o liga);
+#   3. Executa a checagem de saúde do banco (SELECT 1), o que também
+#      gera atividade no Supabase (ajuda na pausa de 7 dias do plano free).
+#
+# ATENÇÃO: o GitHub desativa automaticamente workflows agendados após
+# 60 dias sem atividade no repositório (commits, issues etc.). Faça ao
+# menos um push nesse período — ou reative pela aba "Actions" do GitHub.
+#
+# É grátis: repositório público = Actions sem limite de minutos.
+# =====================================================================
+name: Manter site online (ping a cada 10 min)
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # a cada 10 minutos (antes dos 15 de suspensão)
+  workflow_dispatch:         # permite disparar manualmente pela aba Actions
+
+jobs:
+  ping:
+    name: Ping no Render
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /actuator/health
+        run: |
+          URL="https://formace.onrender.com/actuator/health"
+          echo "Ping em $URL"
+
+          # --max-time 90: se o Render estiver dormindo, o próprio request
+          # acorda o servidor (~60s de cold start) e esperamos a resposta.
+          set +e
+          codigo=$(curl -sS -o /tmp/resposta.txt -w '%{http_code}' \
+                      --max-time 90 "$URL" 2>/dev/null)
+          set -e
+          codigo=${codigo:-000}
+
+          echo "Resposta HTTP: $codigo"
+          cat /tmp/resposta.txt 2>/dev/null || true
+          echo
+
+          if [ "$codigo" != "200" ]; then
+            echo "::error::Render respondeu HTTP $codigo — verificar se o serviço está no ar (ou deploy em andamento)"
+            exit 1
+          fi
+          echo "OK — servidor acordado e respondendo."
