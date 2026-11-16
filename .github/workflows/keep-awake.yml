@@ -34,11 +34,13 @@ jobs:
           URL="https://formace.onrender.com/actuator/health"
           echo "Ping em $URL"
 
-          # --max-time 90: se o Render estiver dormindo, o próprio request
-          # acorda o servidor (~60s de cold start) e esperamos a resposta.
+          # --max-time 300: se o Render estiver dormindo, o próprio request
+          # acorda o servidor. O cold start pode levar ~2-3 min porque o
+          # seed do banco (data.sql) roda a cada boot com latencia ate o
+          # Supabase — por isso esperamos ate 5 minutos pela resposta.
           set +e
           codigo=$(curl -sS -o /tmp/resposta.txt -w '%{http_code}' \
-                      --max-time 90 "$URL" 2>/dev/null)
+                      --max-time 300 "$URL" 2>/dev/null)
           set -e
           codigo=${codigo:-000}
 
