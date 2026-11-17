@@ -1,53 +1,59 @@
 # =====================================================================
-# Mantém o site online no Render (plano free)
+# keep-alive — mantém o site no ar no Render (plano free)
 # ---------------------------------------------------------------------
-# O Render suspende o serviço após 15 minutos sem acesso. Como qualquer
-# código DENTRO do Render também fica suspenso, este ping roda FORA,
-# no GitHub Actions, a cada 10 minutos.
+# O Render suspende o serviço após 15 minutos sem tráfego de entrada.
+# Existem DUAS camadas de keep-alive:
 #
-# O ping em /actuator/health:
-#   1. Impede a suspensão do Render (todo request HTTP conta como acesso);
-#   2. Acorda o servidor caso esteja dormindo (o próprio request o liga);
-#   3. Executa a checagem de saúde do banco (SELECT 1), o que também
-#      gera atividade no Supabase (ajuda na pausa de 7 dias do plano free).
+#   1. INTERNA (primária): KeepAliveScheduler no app Spring — a cada
+#      7 minutos o servidor faz um GET na própria URL pública; o request
+#      sai do container, passa pelo roteador do Render e volta, contando
+#      como tráfego de entrada. Não depende de ninguém.
 #
-# ATENÇÃO: o GitHub desativa automaticamente workflows agendados após
-# 60 dias sem atividade no repositório (commits, issues etc.). Faça ao
-# menos um push nesse período — ou reative pela aba "Actions" do GitHub.
+#   2. EXTERNA (esta file): GitHub Actions a cada 5 minutos bate em
+#      /actuator/health. Serve para ACORDAR o servidor caso ele chegue a
+#      dormir (deploy, reinício do Render etc.) — nada de dentro do
+#      processo acorda um processo parado.
+#
+# O ping em /actuator/health também executa SELECT 1 no banco, mantendo
+# o Supabase ativo (ajuda na pausa de 7 dias do plano free).
+#
+# ATENÇÃO: o GitHub desativa workflows agendados após 60 dias sem
+# atividade no repositório. Faça ao menos um push nesse período.
 #
 # É grátis: repositório público = Actions sem limite de minutos.
 # =====================================================================
 name: keep-alive
+
 on:
   schedule:
-    - cron: '*/10 * * * *'   # a cada 10 minutos (antes dos 15 de suspensão)
-  workflow_dispatch:         # permite disparar manualmente pela aba Actions
+    - cron: '*/5 * * * *'   # a cada 5 min (margem contra atrasos/descartes do scheduler do GitHub)
+  workflow_dispatch:         # disparo manual pela aba Actions
 
 jobs:
   ping:
+    name: Ping no Render
     runs-on: ubuntu-latest
     steps:
-      - name: Ping /actuator/health
-        run: curl -fsS --max-time 90 --retry 2 https://SEU-APP.onrender.com/keep-alive
-          #URL="https://formace.onrender.com/actuator/health"
-          #echo "Ping em $URL"
+      - name: GET /actuator/health
+        run: |
+          URL="https://formace.onrender.com/actuator/health"
+          echo "Ping em $URL"
 
-          # --max-time 300: se o Render estiver dormindo, o próprio request
-          # acorda o servidor. O cold start pode levar ~2-3 min porque o
-          # seed do banco (data.sql) roda a cada boot com latencia ate o
-          # Supabase — por isso esperamos ate 5 minutos pela resposta.
-          #set +e
-          #codigo=$(curl -sS -o /tmp/resposta.txt -w '%{http_code}' \
-                      #--max-time 300 "$URL" 2>/dev/null)
-         # set -e
-          #codigo=${codigo:-000}
+          # --max-time 300: se o Render estiver dormindo, este próprio
+          # request acorda o servidor; o cold start pode levar ~2-3 min
+          # (o seed data.sql roda a cada boot com latência até o Supabase).
+          set +e
+          codigo=$(curl -fsS --max-time 300 --retry 1 --retry-delay 10 --retry-all-errors \
+                      -o /tmp/resposta.txt -w '%{http_code}' "$URL" 2>/dev/null)
+          set -e
+          codigo=${codigo:-000}
 
-         # echo "Resposta HTTP: $codigo"
-         # cat /tmp/resposta.txt 2>/dev/null || true
-         # echo
+          echo "Resposta HTTP: $codigo"
+          cat /tmp/resposta.txt 2>/dev/null || true
+          echo
 
-          #if [ "$codigo" != "200" ]; then
-            #echo "::error::Render respondeu HTTP $codigo — verificar se o serviço está no ar (ou deploy em andamento)"
-            #exit 1
-          #fi
-         # echo "OK — servidor acordado e respondendo."
+          if [ "$codigo" != "200" ]; then
+            echo "::error::Render respondeu HTTP $codigo — verificar se o serviço está no ar"
+            exit 1
+          fi
+          echo "OK — servidor acordado e respondendo."

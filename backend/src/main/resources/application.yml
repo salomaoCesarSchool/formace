@@ -75,6 +75,11 @@ app:
   frontend:
     # base do link de recuperacao de senha enviado por e-mail
     base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
+  keep-alive:
+    # ping interno na URL publica (KeepAliveScheduler) para o Render nao
+    # suspender o servico free apos 15 min de inatividade
+    interval-ms: 420000        # 7 minutos
+    initial-delay-ms: 300000   # espera o boot/seed terminar
   fundacao:
     nome: Fundacao Manuel Cruz
     cnpj: "32.104.587/0001-90"
