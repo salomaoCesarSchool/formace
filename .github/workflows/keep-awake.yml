@@ -17,8 +17,7 @@
 #
 # É grátis: repositório público = Actions sem limite de minutos.
 # =====================================================================
-name: Manter site online (ping a cada 10 min)
-
+name: keep-alive
 on:
   schedule:
     - cron: '*/10 * * * *'   # a cada 10 minutos (antes dos 15 de suspensão)
@@ -26,30 +25,29 @@ on:
 
 jobs:
   ping:
-    name: Ping no Render
     runs-on: ubuntu-latest
     steps:
       - name: Ping /actuator/health
-        run: |
-          URL="https://formace.onrender.com/actuator/health"
-          echo "Ping em $URL"
+        run: curl -fsS --max-time 90 --retry 2 https://SEU-APP.onrender.com/keep-alive
+          #URL="https://formace.onrender.com/actuator/health"
+          #echo "Ping em $URL"
 
           # --max-time 300: se o Render estiver dormindo, o próprio request
           # acorda o servidor. O cold start pode levar ~2-3 min porque o
           # seed do banco (data.sql) roda a cada boot com latencia ate o
           # Supabase — por isso esperamos ate 5 minutos pela resposta.
-          set +e
-          codigo=$(curl -sS -o /tmp/resposta.txt -w '%{http_code}' \
-                      --max-time 300 "$URL" 2>/dev/null)
-          set -e
-          codigo=${codigo:-000}
+          #set +e
+          #codigo=$(curl -sS -o /tmp/resposta.txt -w '%{http_code}' \
+                      #--max-time 300 "$URL" 2>/dev/null)
+         # set -e
+          #codigo=${codigo:-000}
 
-          echo "Resposta HTTP: $codigo"
-          cat /tmp/resposta.txt 2>/dev/null || true
-          echo
+         # echo "Resposta HTTP: $codigo"
+         # cat /tmp/resposta.txt 2>/dev/null || true
+         # echo
 
-          if [ "$codigo" != "200" ]; then
-            echo "::error::Render respondeu HTTP $codigo — verificar se o serviço está no ar (ou deploy em andamento)"
-            exit 1
-          fi
-          echo "OK — servidor acordado e respondendo."
+          #if [ "$codigo" != "200" ]; then
+            #echo "::error::Render respondeu HTTP $codigo — verificar se o serviço está no ar (ou deploy em andamento)"
+            #exit 1
+          #fi
+         # echo "OK — servidor acordado e respondendo."
