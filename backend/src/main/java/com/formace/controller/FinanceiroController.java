@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ContentDisposition;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,11 +31,13 @@ import java.util.List;
 
 /**
  * Modulo financeiro: lancamentos, quitacao, recibo em PDF e fluxo de caixa (RDD).
+ * Restrito aos perfis ADMIN e GESTOR (o OPERADOR nao accessa o financeiro).
  */
 @Tag(name = "Financeiro", description = "Lancamentos, quitacao com multa/juros, recibos em PDF e fluxo de caixa (RDD)")
 @RestController
 @RequestMapping("/api/financeiro")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
 public class FinanceiroController {
 
     private final FinanceiroService financeiroService;

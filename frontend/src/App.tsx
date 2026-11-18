@@ -10,13 +10,23 @@ import Financeiro from './pages/Financeiro';
 import Contratos from './pages/Contratos';
 import ContratoDetalhe from './pages/ContratoDetalhe';
 import NovoContrato from './pages/NovoContrato';
+import Acesso from './pages/Acesso';
 import Relatorio from './pages/Relatorio';
 import { sessaoAtual } from './api/axios';
+import { podeGerenciarUsuarios, podeVerFinanceiro } from './utils/permissoes';
 
 /** Protege as rotas privadas: sem sessao redireciona para /login. */
 function ExigirLogin({ children }: { children: ReactNode }) {
   if (!sessaoAtual()) {
     return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
+
+/** Restringe a rota ao perfil (matriz ADMIN/GESTOR/OPERADOR). */
+function ExigirPermissao({ permitido, children }: { permitido: boolean; children: ReactNode }) {
+  if (!permitido) {
+    return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
 }
@@ -39,12 +49,35 @@ export default function App() {
       >
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="imoveis" element={<Imoveis />} />
-        <Route path="financeiro" element={<Financeiro />} />
+        <Route
+          path="financeiro"
+          element={
+            <ExigirPermissao permitido={podeVerFinanceiro()}>
+              <Financeiro />
+            </ExigirPermissao>
+          }
+        />
         <Route path="contratos" element={<Contratos />} />
         {/* Estático antes de :id — o React Router prioriza segmentos literais */}
         <Route path="contratos/novo" element={<NovoContrato />} />
         <Route path="contratos/:id" element={<ContratoDetalhe />} />
-        <Route path="relatorio" element={<Relatorio />} />
+        <Route
+          path="relatorio"
+          element={
+            <ExigirPermissao permitido={podeVerFinanceiro()}>
+              <Relatorio />
+            </ExigirPermissao>
+          }
+        />
+        {/* Gestão de usuários: somente Administrador */}
+        <Route
+          path="acesso"
+          element={
+            <ExigirPermissao permitido={podeGerenciarUsuarios()}>
+              <Acesso />
+            </ExigirPermissao>
+          }
+        />
       </Route>
       {/* Rotas antigas mantidas para nao quebrar links salvos */}
       <Route path="/relatorios" element={<Navigate to="/relatorio" replace />} />

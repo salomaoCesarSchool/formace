@@ -6,6 +6,7 @@ const rotaParaNome: Record<string, string> = {
   "/imoveis": "Imóveis e locatários",
   "/financeiro": "Financeiro",
   "/relatorio": "Relatórios / MP-SE",
+  "/acesso": "Acesso",
 };
 
 /** Shell autenticado: barra lateral escura + conteúdo da rota (sem header extra). */

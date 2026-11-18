@@ -27,9 +27,9 @@ export function papelAtual(): Papel | null {
   if (papel === "ADMIN" || papel === "GESTOR" || papel === "OPERADOR") {
     return papel;
   }
-  // Contas antigas criadas sem role explicita entram como ADMIN (comportamento
-  // legado do @PrePersist da entidade Usuario).
-  return papel ? "ADMIN" : null;
+  // Roles fora da matriz (ex.: ROLE_USER vinda do cadastro publico) nao
+  // ganham menus: a restricao vale frontend E backend (@PreAuthorize).
+  return null;
 }
 
 /** Somente o administrador gerencia usuarios (/acesso). */

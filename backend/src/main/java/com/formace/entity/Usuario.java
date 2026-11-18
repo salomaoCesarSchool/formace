@@ -1,5 +1,6 @@
 package com.formace.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -34,7 +35,8 @@ public class Usuario {
     @Column(name = "username", nullable = false, unique = true, length = 80)
     private String username;
 
-    /** Senha com hash BCrypt. */
+    /** Senha com hash BCrypt (nunca sai na API — defense in depth no DTO). */
+    @JsonIgnore
     @Column(name = "password", nullable = false, length = 120)
     private String password;
 

@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -30,10 +31,13 @@ import java.util.List;
  *  - Stateless (sem sessao) + JWT;
  *  - CORS restrito as origens do frontend;
  *  - Toda rota /api/** exige token autenticado (nao ha id de usuario editavel pelo cliente,
- *    o que elimina a superficie classica de IDOR nestes endpoints).
+ *    o que elimina a superficie classica de IDOR nestes endpoints);
+ *  - @EnableMethodSecurity ativa o @PreAuthorize por perfil (ADMIN/GESTOR/OPERADOR)
+ *    nos endpoints de usuarios, financeiro, relatorios e configuracao de documentos.
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 

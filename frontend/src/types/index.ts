@@ -96,6 +96,17 @@ export interface Fiador {
   criadoEm?: string;
 }
 
+/** Usuário do sistema (tela de Acesso — nunca vem com a senha). */
+export interface UsuarioSistema {
+  id: number;
+  username: string;
+  nome: string;
+  email?: string | null;
+  /** ROLE_ADMIN | ROLE_GESTOR | ROLE_OPERADOR (ou legados como ROLE_USER). */
+  role: string;
+  criadoEm?: string;
+}
+
 export interface Recibo {
   id: number;
   numero: number;

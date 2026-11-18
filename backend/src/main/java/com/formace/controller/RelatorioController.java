@@ -4,6 +4,7 @@ import com.formace.dto.RelatorioResumoResponse;
 import com.formace.service.RelatorioMPService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ContentDisposition;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,11 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Prestacao de contas ao Ministerio Publico de Sergipe (MP-SE).
+ * Restrito aos perfis ADMIN e GESTOR (o OPERADOR nao acessa relatorios).
  */
 @Tag(name = "Relatorios", description = "Relatorio consolidado para o MP-SE")
 @RestController
 @RequestMapping("/api/relatorios")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
 public class RelatorioController {
 
     private final RelatorioMPService relatorioMPService;

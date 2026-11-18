@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +26,8 @@ import java.util.List;
  * Documentos obrigatorios configuraveis por modalidade de garantia.
  * O contrato exige, para cada modalidade escolhida, os documentos
  * cadastrados aqui (para o cliente e/ou para o fiador).
+ * Leitura livre para todos os autenticados (o OPERADOR monta contratos);
+ * alteracao restrita a ADMIN e GESTOR.
  */
 @Tag(name = "Documentos obrigatorios", description = "Documentos exigidos por modalidade de garantia")
 @RestController
@@ -44,6 +47,7 @@ public class DocumentoObrigatorioController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
     public DocumentoObrigatorio criar(@Valid @RequestBody DocumentoObrigatorioRequest request) {
         return repository.save(DocumentoObrigatorio.builder()
                 .modalidade(request.modalidade().trim().toUpperCase())
@@ -54,6 +58,7 @@ public class DocumentoObrigatorioController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
     public DocumentoObrigatorio atualizar(@PathVariable Long id,
                                           @Valid @RequestBody DocumentoObrigatorioRequest request) {
         DocumentoObrigatorio documento = repository.findById(id)
@@ -67,6 +72,7 @@ public class DocumentoObrigatorioController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
     public void excluir(@PathVariable Long id) {
         if (!repository.existsById(id)) {
             throw new NotFoundException("Documento " + id + " nao encontrado");

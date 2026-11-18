@@ -9,5 +9,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     Optional<Usuario> findByUsername(String username);
 
+    /** Conta os usuarios de um papel (protege a exclusao do ultimo ADMIN). */
+    long countByRole(String role);
+
     Optional<Usuario> findByEmailIgnoreCase(String email);
 }

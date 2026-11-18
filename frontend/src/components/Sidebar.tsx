@@ -2,8 +2,17 @@ import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import fundo from "../assets/fundo.png";
 import { encerrarSessao, sessaoAtual } from "../api/axios";
+import { podeGerenciarUsuarios, podeVerFinanceiro } from "../utils/permissoes";
 
-const menuItems = [
+interface ItemMenu {
+  nome: string;
+  rota: string;
+  icone: React.ReactNode;
+  /** Esconde o item quando o perfil nao permite (matriz de permissoes). */
+  visivel?: () => boolean;
+}
+
+const menuItems: ItemMenu[] = [
   {
     nome: "Visão geral",
     rota: "/dashboard",
@@ -26,6 +35,7 @@ const menuItems = [
   {
     nome: "Financeiro",
     rota: "/financeiro",
+    visivel: podeVerFinanceiro,
     icone: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-1.05a3 3 0 01-2-2.83h2a1 1 0 001 1h1a1 1 0 000-2h-1a3 3 0 010-6V5h2v1.05a3 3 0 012 2.83h-2a1 1 0 00-1-1h-1a1 1 0 000 2h1a3 3 0 010 6z" />
@@ -44,9 +54,21 @@ const menuItems = [
   {
     nome: "Relatórios / MP-SE",
     rota: "/relatorio",
+    visivel: podeVerFinanceiro,
     icone: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
         <path d="M4 4h16v3H4zM4 10h16v2H4zM4 15h10v2H4zM4 19h7v1H4z" />
+      </svg>
+    ),
+  },
+  {
+    // Requisito: acesso abaixo de "Relatórios / MP-SE", somente Administrador.
+    nome: "Acesso",
+    rota: "/acesso",
+    visivel: podeGerenciarUsuarios,
+    icone: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 1a5 5 0 00-5 5v3H6a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2v-9a2 2 0 00-2-2h-1V6a5 5 0 00-5-5zm-3 8V6a3 3 0 116 0v3H9zm3 11a2 2 0 110-4 2 2 0 010 4z" />
       </svg>
     ),
   },
@@ -94,7 +116,9 @@ function Sidebar({ usuario, ativo = "Visão geral" }: SidebarProps) {
         {usuario}
       </p>
       <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {menuItems.map((item) => (
+        {menuItems
+          .filter((item) => !item.visivel || item.visivel())
+          .map((item) => (
           <Link
             key={item.nome}
             to={item.rota}
