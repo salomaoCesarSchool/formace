@@ -8,17 +8,20 @@ import CadastrarLocatario from "../components/locatario";
 import type { LocacaoConcluida } from "../components/locatario";
 import { api, mensagemDeErro } from "../api/axios";
 import { diasAte, formatBRL, rotuloVencimento } from "../utils/format";
+import PageHeader from "../components/PageHeader";
+import { CORES } from "../theme";
 import type { Contrato, Imovel, StatusImovel } from "../types";
 
-type StatusLinha = "Ocupado" | "Vence em breve" | "Vago";
+type StatusLinha = "Alugado" | "Vence em breve" | "Vago";
 
-const statusCores: Record<StatusLinha, string> = {
-  Ocupado: "#e4e0fb",
-  "Vence em breve": "#c9c4f7",
-  Vago: "#e4e0fb",
+/** Chips conforme o Figma: alugado/vence em breve em azul, vago em cinza. */
+const statusCores: Record<StatusLinha, { bg: string; texto: string }> = {
+  Alugado: { bg: "#dbeafe", texto: "#1e40af" },
+  "Vence em breve": { bg: "#dbeafe", texto: "#1e40af" },
+  Vago: { bg: "#f1f5f9", texto: "#64748b" },
 };
 
-const statusOpcoes: StatusLinha[] = ["Ocupado", "Vence em breve", "Vago"];
+const statusOpcoes: StatusLinha[] = ["Alugado", "Vence em breve", "Vago"];
 
 interface ImovelNovo {
   endereco: string;
@@ -91,7 +94,7 @@ export default function Imoveis() {
       if (contrato && diasAte(contrato.dataFim) <= 90 && diasAte(contrato.dataFim) >= 0) {
         return "Vence em breve";
       }
-      return "Ocupado";
+      return "Alugado";
     }
     return "Vago";
   };
@@ -215,34 +218,25 @@ export default function Imoveis() {
 
   return (
     <main style={{ padding: "28px 36px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: 24,
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: 20, marginBottom: 2, color: "#1a1a2e" }}>
-            Imóveis e clientes
-          </h1>
-          <p style={{ color: "#999", fontSize: 12 }}>
-            {carregando
-              ? "Carregando imóveis..."
-              : `${imoveis.length} imóveis cadastrados`}
-          </p>
-        </div>
-        <Button variant="primary" onClick={abrirModal}>
-          + Novo imóvel
-        </Button>
-      </div>
+      <PageHeader
+        titulo="Imóveis e locatários"
+        subtitulo={
+          carregando
+            ? "Carregando imóveis..."
+            : `${imoveis.length} imóveis cadastrados`
+        }
+        acoes={
+          <Button variant="primary" onClick={abrirModal}>
+            + Novo imóvel
+          </Button>
+        }
+      />
 
       {erro && (
         <div
           style={{
-            background: "#fdecec",
-            color: "#d63031",
+            background: "#fee2e2",
+            color: "#b91c1c",
             borderRadius: 10,
             padding: 14,
             fontSize: 13,
@@ -255,8 +249,8 @@ export default function Imoveis() {
       {aviso && (
         <div
           style={{
-            background: "#f1f0ff",
-            color: "rgba(14, 26, 194, 0.7)",
+            background: "#eff6ff",
+            color: "#1d4ed8",
             borderRadius: 10,
             padding: 14,
             fontSize: 13,
@@ -267,7 +261,7 @@ export default function Imoveis() {
         </div>
       )}
 
-      <div style={{ border: "1px solid #e5e5ef", borderRadius: 10, padding: 20 }}>
+      <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, padding: 20 }}>
         <div
           style={{
             display: "flex",
@@ -280,14 +274,14 @@ export default function Imoveis() {
           <Input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Nome, endereço ou código"
+            placeholder="Buscar imóvel"
             style={{ width: 260 }}
           />
           <Select
             value={statusFiltro}
             onChange={(e) => setStatusFiltro(e.target.value)}
           >
-            <option value="">Filtrar por status</option>
+            <option value="">Todos os status</option>
             {statusOpcoes.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -298,21 +292,20 @@ export default function Imoveis() {
 
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ color: "#999", fontSize: 12, textAlign: "left" }}>
-              <th style={{ fontWeight: 400, paddingBottom: 10 }}>Imóvel</th>
-              <th style={{ fontWeight: 400, paddingBottom: 10 }}>Locatário</th>
-              <th style={{ fontWeight: 400, paddingBottom: 10 }}>Contrato</th>
-              <th style={{ fontWeight: 400, paddingBottom: 10 }}>Aluguel</th>
-              <th style={{ fontWeight: 400, paddingBottom: 10 }}>Status</th>
-              <th style={{ fontWeight: 400, paddingBottom: 10 }}></th>
+            <tr style={{ color: "#64748b", fontSize: 12, textAlign: "left" }}>
+              <th style={{ fontWeight: 600, paddingBottom: 10 }}>Imóvel</th>
+              <th style={{ fontWeight: 600, paddingBottom: 10 }}>Locatário</th>
+              <th style={{ fontWeight: 600, paddingBottom: 10 }}>Contrato</th>
+              <th style={{ fontWeight: 600, paddingBottom: 10 }}>Status</th>
+              <th style={{ fontWeight: 600, paddingBottom: 10 }}>Ações</th>
             </tr>
           </thead>
           <tbody>
             {carregando && (
               <tr>
                 <td
-                  colSpan={6}
-                  style={{ padding: "20px 0", textAlign: "center", color: "#bbb", fontSize: 13 }}
+                  colSpan={5}
+                  style={{ padding: "20px 0", textAlign: "center", color: "#94a3b8", fontSize: 13 }}
                 >
                   Carregando imóveis...
                 </td>
@@ -321,14 +314,15 @@ export default function Imoveis() {
             {!carregando && imoveisFiltrados.map((item) => {
               const contrato = contratoPorImovel.get(item.id);
               const status = statusDaLinha(item);
+              const cor = statusCores[status];
               return (
                 <tr
                   key={item.id}
-                  style={{ fontSize: 13, color: "#999", borderTop: "1px solid #f0f0f5" }}
+                  style={{ fontSize: 13, color: "#334155", borderTop: "1px solid #f1f5f9" }}
                 >
                   <td style={{ padding: "10px 0" }}>
                     {item.endereco}, {item.numero ?? "s/n"}
-                    <span style={{ display: "block", fontSize: 11, color: "#bbb" }}>
+                    <span style={{ display: "block", fontSize: 11, color: "#94a3b8" }}>
                       {item.codigo} · {item.bairro} - {item.cidade}
                     </span>
                   </td>
@@ -336,16 +330,16 @@ export default function Imoveis() {
                   <td style={{ padding: "10px 0" }}>
                     {contrato ? rotuloVencimento(contrato.dataFim) : "—"}
                   </td>
-                  <td style={{ padding: "10px 0" }}>{formatBRL(item.valorAluguel)}</td>
                   <td style={{ padding: "10px 0" }}>
                     <span
                       style={{
-                        background: statusCores[status],
-                        color: "rgba(14, 26, 194, 0.5)",
+                        background: cor.bg,
+                        color: cor.texto,
                         fontWeight: 600,
-                        borderRadius: 20,
+                        borderRadius: 999,
                         padding: "4px 12px",
                         fontSize: 11,
+                        display: "inline-block",
                       }}
                     >
                       {status}
@@ -372,8 +366,8 @@ export default function Imoveis() {
             {!carregando && imoveisFiltrados.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
-                  style={{ padding: "20px 0", textAlign: "center", color: "#bbb", fontSize: 13 }}
+                  colSpan={5}
+                  style={{ padding: "20px 0", textAlign: "center", color: "#94a3b8", fontSize: 13 }}
                 >
                   Nenhum imóvel encontrado
                 </td>
@@ -381,6 +375,20 @@ export default function Imoveis() {
             )}
           </tbody>
         </table>
+
+        {!carregando && (
+          <p
+            style={{
+              margin: "14px 0 0",
+              fontSize: 12,
+              color: CORES.textoSuave,
+            }}
+          >
+            {imoveisFiltrados.length} registro{imoveisFiltrados.length === 1 ? "" : "s"}{" "}
+            exibido{imoveisFiltrados.length === 1 ? "" : "s"} · {imoveis.length} imóveis
+            cadastrados
+          </p>
+        )}
       </div>
 
       {modalAberto && (
@@ -496,7 +504,7 @@ export default function Imoveis() {
             </div>
 
             {erroForm && (
-              <div style={{ color: "#d63031", fontSize: 12, marginTop: 8 }}>{erroForm}</div>
+              <div style={{ color: "#b91c1c", fontSize: 12, marginTop: 8 }}>{erroForm}</div>
             )}
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>

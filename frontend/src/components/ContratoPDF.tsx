@@ -39,7 +39,7 @@ function ContratoPDF({ contrato }: { contrato: ContratoCriado }) {
           width: "100%",
           maxWidth: 820,
           height: "75vh",
-          border: "1px solid #e5e5ef",
+          border: "1px solid #e2e8f0",
           borderRadius: 10,
         }}
       />

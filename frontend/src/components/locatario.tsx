@@ -91,7 +91,7 @@ const labelStyle: CSSProperties = {
   display: "block",
 };
 const erroStyle: CSSProperties = {
-  color: "#d63031",
+  color: "#b91c1c",
   fontSize: 12,
   marginTop: 4,
 };
@@ -554,7 +554,7 @@ function CadastrarLocatario({ imovel, onClose, onConcluir }: Props) {
           <h3 style={tituloBloco}>Renda familiar</h3>
           <div
             style={{
-              background: "#f1f2fc",
+              background: "#eff6ff",
               borderRadius: 8,
               padding: "12px 16px",
               fontSize: 13,
@@ -571,7 +571,7 @@ function CadastrarLocatario({ imovel, onClose, onConcluir }: Props) {
               <strong>{brl(rendaMinima)}</strong>
             </div>
             <div
-              style={{ color: rendaOk ? "#2d7a4f" : "#d63031", marginTop: 4 }}
+              style={{ color: rendaOk ? "#2d7a4f" : "#b91c1c", marginTop: 4 }}
             >
               {rendaOk
                 ? "A renda atende ao critério."
@@ -781,7 +781,7 @@ function CadastrarLocatario({ imovel, onClose, onConcluir }: Props) {
                 style={{
                   fontSize: 12,
                   fontWeight: i === etapa ? 700 : 400,
-                  color: i === etapa ? "#6c5ce7" : i < etapa ? "#555" : "#bbb",
+                  color: i === etapa ? "#1a5fa8" : i < etapa ? "#555" : "#bbb",
                 }}
               >
                 {i + 1}. {nome}

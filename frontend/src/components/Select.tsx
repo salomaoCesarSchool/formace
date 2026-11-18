@@ -5,7 +5,7 @@ function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
     <select
       {...props}
       style={{
-        border: "1px solid #e5e5ef",
+        border: "1px solid #e2e8f0",
         borderRadius: 8,
         padding: "8px 12px",
         fontSize: 13,

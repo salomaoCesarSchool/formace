@@ -34,12 +34,12 @@ const entrada: CSSProperties = {
   fontFamily: "'Nunito', sans-serif",
   color: "#1a1a2e",
   background: "#fff",
-  boxShadow: "0 2px 10px rgba(108, 92, 231, 0.14)",
+  boxShadow: "0 2px 10px rgba(26, 95, 168, 0.16)",
   outline: "none",
 };
 
 const erroStyle: CSSProperties = {
-  color: "#d63031",
+  color: "#b91c1c",
   fontSize: 11,
   marginTop: 5,
 };
@@ -53,7 +53,7 @@ function Olho({ aberto }: { aberto: boolean }) {
       height="16"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#8689de"
+      stroke="#94a3b8"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -69,19 +69,19 @@ function Olho({ aberto }: { aberto: boolean }) {
 const SOCIAIS: { nome: string; cor: string; caminho: string }[] = [
   {
     nome: "Twitter",
-    cor: "#c9cbf0",
+    cor: "#a9c8ef",
     caminho:
       "M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z",
   },
   {
     nome: "Facebook",
-    cor: "#c9cbf0",
+    cor: "#a9c8ef",
     caminho:
       "M14 8V6c0-.9.2-1.5 1.6-1.5H17V1.2C16.7 1.1 15.7 1 14.6 1 12.1 1 10.4 2.5 10.4 5.3V8H7.5v3.4h2.9V23H14V11.4h2.7L17.1 8z",
   },
   {
     nome: "Google",
-    cor: "#8689de",
+    cor: "#a9c8ef",
     caminho:
       "M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z",
   },
@@ -268,7 +268,7 @@ function Login() {
         fontFamily: "'Nunito', sans-serif",
         color: "#1a1a2e",
         cursor: "pointer",
-        borderBottom: `2px solid ${modo === m ? "#c9cbf0" : "transparent"}`,
+        borderBottom: `2px solid ${modo === m ? "#93c5fd" : "transparent"}`,
       }}
     >
       {texto}
@@ -314,11 +314,10 @@ function Login() {
           {modo === "esqueci" ? (
             <div style={{ textAlign: "center", margin: "0 auto 32px" }}>
               <h1 style={{ fontSize: 16, fontWeight: 600, color: "#1a1a2e", margin: 0 }}>
-                Esqueci a senha
+                Esqueceu a senha?
               </h1>
               <p style={{ fontSize: 11, color: "#777", margin: "6px 0 0" }}>
-                Informe o e-mail da sua conta e enviaremos um link para criar uma
-                nova senha.
+                Informe o e-mail para o qual deseja redefinir sua senha.
               </p>
             </div>
           ) : (
@@ -326,7 +325,7 @@ function Login() {
               role="tablist"
               style={{ display: "flex", maxWidth: 240, margin: "0 auto 40px" }}
             >
-              {aba("login", "Login")}
+              {aba("login", "Entrar")}
               {aba("cadastro", "Cadastro")}
             </div>
           )}
@@ -336,7 +335,7 @@ function Login() {
               <div
                 role="status"
                 style={{
-                  background: "#f1f2fc",
+                  background: "#eff6ff",
                   borderRadius: 8,
                   padding: 16,
                   fontSize: 12,
@@ -349,15 +348,24 @@ function Login() {
                 criar uma nova senha (vale por 30 minutos). Não esqueça de
                 conferir a caixa de spam.
               </div>
-              <div style={{ display: "flex", justifyContent: "center", marginTop: 22 }}>
+              <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 22 }}>
+                <Button
+                  type="button"
+                  onClick={enviar}
+                  disabled={carregando}
+                  style={{
+                    width: 170,
+                    background: "#1a5fa8",
+                    boxShadow: "0 4px 14px rgba(26, 95, 168, 0.35)",
+                  }}
+                >
+                  {carregando ? "Enviando..." : "Enviar novamente"}
+                </Button>
                 <Button
                   type="button"
                   onClick={() => trocar("login")}
-                  style={{
-                    width: 190,
-                    background: "#6c6fd0",
-                    boxShadow: "0 4px 14px rgba(108, 111, 208, 0.45)",
-                  }}
+                  style={{ width: 170 }}
+                  variant="secondary"
                 >
                   Voltar ao login
                 </Button>
@@ -411,8 +419,8 @@ function Login() {
                   disabled={carregando}
                   style={{
                     width: 190,
-                    background: "#6c6fd0",
-                    boxShadow: "0 4px 14px rgba(108, 111, 208, 0.45)",
+                    background: "#1a5fa8",
+                    boxShadow: "0 4px 14px rgba(26, 95, 168, 0.35)",
                   }}
                 >
                   {carregando
@@ -420,7 +428,7 @@ function Login() {
                       ? "Enviando..."
                       : "Autenticando..."
                     : modo === "login"
-                      ? "Login"
+                      ? "Entrar"
                       : modo === "cadastro"
                         ? "Cadastrar"
                         : "Enviar link"}
@@ -437,25 +445,14 @@ function Login() {
                     Voltar ao login
                   </button>
                 ) : (
-                  <span style={{ color: "#8689de" }}>
+                  <span style={{ color: "#4457d9" }}>
                     Já tem uma conta?{" "}
                     <button type="button" onClick={() => trocar("login")} style={linkStyle}>
-                      Login
+                      Entrar
                     </button>
                   </span>
                 )}
               </div>
-
-              <p
-                style={{
-                  textAlign: "center",
-                  fontSize: 9,
-                  color: "#aaa",
-                  margin: "26px 0 10px",
-                }}
-              >
-                Acesso inicial: admin / admin123
-              </p>
 
               {modo !== "esqueci" && (
                 <>
@@ -515,7 +512,7 @@ const linkStyle: CSSProperties = {
   border: "none",
   background: "none",
   padding: 0,
-  color: "#8689de",
+  color: "#4457d9",
   fontSize: 10,
   fontFamily: "'Nunito', sans-serif",
   cursor: "pointer",

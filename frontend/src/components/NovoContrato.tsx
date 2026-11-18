@@ -375,7 +375,7 @@ function Assinar({
   return (
     <div
       style={{
-        border: erro ? "1px solid #d63031" : "1px solid #e5e5ef",
+        border: erro ? "1px solid #b91c1c" : "1px solid #e2e8f0",
         background: erro ? "#fff5f5" : undefined,
         borderRadius: 10,
         padding: 12,
@@ -387,7 +387,7 @@ function Assinar({
           display: "flex",
           justifyContent: "space-between",
           fontSize: 12,
-          color: erro ? "#d63031" : "#555",
+          color: erro ? "#b91c1c" : "#555",
           marginBottom: 6,
         }}
       >
@@ -399,7 +399,7 @@ function Assinar({
             style={{
               border: "none",
               background: "none",
-              color: "#6c5ce7",
+              color: "#1a5fa8",
               cursor: "pointer",
               fontSize: 12,
             }}
@@ -416,7 +416,7 @@ function Assinar({
         style={{
           width: "100%",
           height: 110,
-          background: "#f1f2fc",
+          background: "#eff6ff",
           borderRadius: 8,
           touchAction: "none",
           cursor: bloqueado ? "not-allowed" : "crosshair",
@@ -487,7 +487,7 @@ function Titulo({ children }: { children: React.ReactNode }) {
         gridColumn: "1 / -1",
         fontSize: 12,
         fontWeight: 700,
-        color: "#6c5ce7",
+        color: "#1a5fa8",
         marginTop: 6,
       }}
     >
@@ -538,7 +538,7 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
       style={{
         ...largo,
         ...(camposErr[k]
-          ? { border: "1px solid #d63031", background: "#fff5f5" }
+          ? { border: "1px solid #b91c1c", background: "#fff5f5" }
           : null),
       }}
       {...props}
@@ -712,14 +712,14 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
                 style={{
                   height: 4,
                   borderRadius: 2,
-                  background: i <= passo ? "#6c5ce7" : "#e5e5ef",
+                  background: i <= passo ? "#1a5fa8" : "#e2e8f0",
                 }}
               />
               <div
                 style={{
                   fontSize: 11,
                   marginTop: 4,
-                  color: i === passo ? "#6c5ce7" : "#999",
+                  color: i === passo ? "#1a5fa8" : "#999",
                   fontWeight: i === passo ? 700 : 400,
                 }}
               >
@@ -802,7 +802,7 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
               style={{
                 width: "100%",
                 height: 440,
-                border: "1px solid #e5e5ef",
+                border: "1px solid #e2e8f0",
                 borderRadius: 8,
               }}
             />
@@ -867,7 +867,7 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
             <label
               style={{
                 fontSize: 12,
-                color: camposErr.firmas ? "#d63031" : "#555",
+                color: camposErr.firmas ? "#b91c1c" : "#555",
                 display: "flex",
                 gap: 8,
               }}
@@ -936,7 +936,7 @@ function NovoContrato({ imovel, onClose, onConcluir }: Props) {
         )}
 
         {erro && (
-          <div style={{ color: "#d63031", fontSize: 12, marginTop: 12 }}>
+          <div style={{ color: "#b91c1c", fontSize: 12, marginTop: 12 }}>
             {erro}
           </div>
         )}

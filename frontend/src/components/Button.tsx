@@ -21,15 +21,17 @@ function Button({
   };
 
   const variants = {
-    primary: { background: "#6c5ce7", color: "#fff" },
+    // Azul primario do Figma (botao preenchido).
+    primary: { background: "#1a5fa8", color: "#fff" },
+    // Contorno do Figma: fundo branco, borda cinza e texto azul.
     secondary: {
       background: "#fff",
-      color: "#999",
-      border: "1px solid #e5e5ef",
-      fontWeight: 400,
-      padding: "4px 10px",
-      fontSize: 11,
-      borderRadius: 6,
+      color: "#1a5fa8",
+      border: "1px solid #cbd5e1",
+      fontWeight: 600,
+      padding: "7px 14px",
+      fontSize: 12,
+      borderRadius: 8,
     },
   };
 

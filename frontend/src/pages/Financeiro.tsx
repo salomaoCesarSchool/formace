@@ -18,6 +18,7 @@ import type {
   Locatario,
 } from "../types";
 import { formatBRL, formatMesReferencia, mesAtual } from "../utils/format";
+import PageHeader from "../components/PageHeader";
 
 /* ========== Tipos, dados e cálculos ========== */
 
@@ -281,7 +282,7 @@ function calcularEncargos(
 
 const card: CSSProperties = {
   background: "#fff",
-  border: "1px solid #e8e8f2",
+  border: "1px solid #e2e8f0",
   borderRadius: 12,
   padding: 20,
   marginBottom: 20,
@@ -300,7 +301,7 @@ const labelStyle: CSSProperties = {
   display: "block",
 };
 const erroStyle: CSSProperties = {
-  color: "#d63031",
+  color: "#b91c1c",
   fontSize: 11,
   marginTop: 4,
 };
@@ -396,18 +397,20 @@ function Tile({
   return (
     <div
       style={{
-        background: destaque ? "#8689de" : "#f1f2fc",
+        background: destaque ? "#e8f1fd" : "transparent",
+        border: destaque ? "1px solid #cfe3f9" : "none",
         borderRadius: 8,
         padding: 14,
       }}
     >
-      <div style={{ fontSize: 11, color: destaque ? "#fff" : "#333" }}>
+      <div style={{ fontSize: 11, color: destaque ? "#334155" : "#94a3b8" }}>
         {rotulo}
       </div>
       <div
         style={{
           fontSize: 20,
-          color: destaque ? "#fff" : "#6c6fd0",
+          fontWeight: destaque ? 700 : 600,
+          color: destaque ? "#1a5fa8" : "#16233b",
           marginTop: 6,
         }}
       >
@@ -1323,7 +1326,7 @@ function AbaCobrancas({
   );
 }
 
-/* ========== Aba Fechamento final ========== */
+/* ========== Aba Fechamento mensal ========== */
 
 interface PropsFechamento {
   movimentos: Movimento[];
@@ -1464,7 +1467,7 @@ const ABAS = [
   "RDD",
   "Gastos e despesas",
   "Cobranças",
-  "Fechamento final",
+  "Fechamento mensal",
 ];
 
 const MES_REGEX = /^(0[1-9]|1[0-2])\/\d{4}$/;
@@ -1844,21 +1847,21 @@ function Financeiro() {
     <div
       style={{
         fontFamily: "'Nunito', sans-serif",
-        padding: 24,
-        background: "#fcfcf6",
+        padding: "28px 36px",
+        background: "#fff",
         minHeight: "100%",
       }}
     >
-      <h1 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Financeiro</h1>
-      <p style={{ fontSize: 10, color: "#666", margin: "2px 0 20px" }}>
-        Lançamento de aluguéis, recibos e gastos
-      </p>
+      <PageHeader
+        titulo="Financeiro"
+        subtitulo="Lançamento de aluguéis, recibos e gastos"
+      />
 
       {/* feedback de sucesso/erro */}
       {(erro || aviso) && (
-        <div style={{ margin: "-10px 0 16px", fontSize: 11 }}>
-          {erro && <div style={{ color: "#d63031" }}>{erro}</div>}
-          {aviso && <div style={{ color: "#2f9e44" }}>{aviso}</div>}
+        <div style={{ margin: "0 0 16px", fontSize: 12 }}>
+          {erro && <div style={{ color: "#b91c1c" }}>{erro}</div>}
+          {aviso && <div style={{ color: "#15803d" }}>{aviso}</div>}
         </div>
       )}
 
@@ -1888,7 +1891,7 @@ function Financeiro() {
               display: "grid",
               gridTemplateColumns: `repeat(${ABAS.length}, 1fr)`,
               background: "#fff",
-              border: "1px solid #e8e8f2",
+              border: "1px solid #e2e8f0",
               borderRadius: 8,
               marginBottom: 20,
               overflow: "hidden",
@@ -1947,7 +1950,7 @@ function Financeiro() {
               onReceber={receberAtrasados}
             />
           )}
-          {aba === "Fechamento final" && (
+          {aba === "Fechamento mensal" && (
             <AbaFechamento
               movimentos={movimentos}
               recebimentos={recebimentos.filter((r) => r.status === "Pago")}
@@ -2064,14 +2067,14 @@ function Financeiro() {
                 >
                   <div
                     style={{
-                      background: "#f1f2fc",
+                      background: "#eff6ff",
                       borderRadius: 8,
                       padding: "10px 16px",
                       minWidth: 220,
                     }}
                   >
                     <div style={{ fontSize: 12, color: "#333" }}>Total</div>
-                    <div style={{ fontSize: 20, color: "#6c6fd0" }}>
+                    <div style={{ fontSize: 20, color: "#1a5fa8" }}>
                       {brl(total)}
                     </div>
                   </div>
@@ -2271,14 +2274,14 @@ function Financeiro() {
 
                 <div
                   style={{
-                    background: "#f1f2fc",
+                    background: "#eff6ff",
                     borderRadius: 8,
                     padding: "10px 16px",
                     marginTop: 14,
                   }}
                 >
                   <div style={{ fontSize: 12, color: "#333" }}>Total pago</div>
-                  <div style={{ fontSize: 20, color: "#6c6fd0" }}>
+                  <div style={{ fontSize: 20, color: "#1a5fa8" }}>
                     {brl(reciboAberto.valor)}
                   </div>
                 </div>

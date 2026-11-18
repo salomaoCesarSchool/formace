@@ -5,7 +5,7 @@ import { encerrarSessao, sessaoAtual } from "../api/axios";
 
 const menuItems = [
   {
-    nome: "Dashboard",
+    nome: "Visão geral",
     rota: "/dashboard",
     icone: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -14,7 +14,7 @@ const menuItems = [
     ),
   },
   {
-    nome: "Imóveis e clientes",
+    nome: "Imóveis e locatários",
     rota: "/imoveis",
     icone: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -42,7 +42,7 @@ const menuItems = [
     ),
   },
   {
-    nome: "Relatório/MP",
+    nome: "Relatórios / MP-SE",
     rota: "/relatorio",
     icone: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -61,7 +61,7 @@ interface SidebarProps {
  * Navegacao lateral escura (imagem de fundo + sobreposicao), conforme o layout
  * das telas novas. O botao de saida encerra a sessao JWT.
  */
-function Sidebar({ usuario, ativo = "Dashboard" }: SidebarProps) {
+function Sidebar({ usuario, ativo = "Visão geral" }: SidebarProps) {
   const navigate = useNavigate();
 
   function sair() {
@@ -89,11 +89,11 @@ function Sidebar({ usuario, ativo = "Dashboard" }: SidebarProps) {
         <img src={logo} alt="Formace" style={{ width: 190 }} />
       </div>
       <p style={{ opacity: 0.9, marginBottom: 32, fontSize: 18, lineHeight: 1.4 }}>
-        Bem vindo,
+        Bem-vindo,
         <br />
         {usuario}
       </p>
-      <nav style={{ display: "flex", flexDirection: "column" }}>
+      <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {menuItems.map((item) => (
           <Link
             key={item.nome}
@@ -102,13 +102,14 @@ function Sidebar({ usuario, ativo = "Dashboard" }: SidebarProps) {
               display: "flex",
               alignItems: "center",
               gap: 14,
-              padding: "14px 10px",
+              padding: "13px 14px",
               color: "#fff",
               textDecoration: "none",
-              opacity: item.nome === ativo ? 1 : 0.65,
+              opacity: item.nome === ativo ? 1 : 0.72,
               fontWeight: item.nome === ativo ? 600 : 400,
-              borderLeft:
-                item.nome === ativo ? "4px solid #fff" : "4px solid transparent",
+              borderRadius: 10,
+              background:
+                item.nome === ativo ? "rgba(255,255,255,0.14)" : "transparent",
               fontSize: 16,
             }}
           >

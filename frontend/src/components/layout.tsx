@@ -2,10 +2,10 @@ import { Outlet, useLocation } from "react-router-dom";
 import Sidebar, { usuarioDaSessao } from "./Sidebar";
 
 const rotaParaNome: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/imoveis": "Imóveis e clientes",
+  "/dashboard": "Visão geral",
+  "/imoveis": "Imóveis e locatários",
   "/financeiro": "Financeiro",
-  "/relatorio": "Relatório/MP",
+  "/relatorio": "Relatórios / MP-SE",
 };
 
 /** Shell autenticado: barra lateral escura + conteúdo da rota (sem header extra). */

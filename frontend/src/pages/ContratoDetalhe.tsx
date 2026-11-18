@@ -82,7 +82,7 @@ function ContratoDaApi({ id }: { id?: string }) {
     return (
       <main style={{ padding: "28px 36px", fontFamily: "'Nunito', sans-serif" }}>
         <p>{aviso || "Contrato não encontrado."}</p>
-        <Link to="/contratos" style={{ fontSize: 12, color: "#6c5ce7" }}>
+        <Link to="/contratos" style={{ fontSize: 12, color: "#1a5fa8" }}>
           ← Voltar para Contratos
         </Link>
       </main>
@@ -112,7 +112,7 @@ function ContratoDaApi({ id }: { id?: string }) {
     <main style={{ padding: "28px 36px", fontFamily: "'Nunito', sans-serif" }}>
       <Link
         to="/contratos"
-        style={{ fontSize: 12, color: "#6c5ce7", textDecoration: "none" }}
+        style={{ fontSize: 12, color: "#1a5fa8", textDecoration: "none" }}
       >
         ← Voltar para Contratos
       </Link>
@@ -170,8 +170,8 @@ function ContratoDaApi({ id }: { id?: string }) {
       {pdfUrl ? (
         <div
           style={{
-            background: "#f1f0ff",
-            border: "1px solid #e5e5ef",
+            background: "#eff6ff",
+            border: "1px solid #e2e8f0",
             borderRadius: 12,
             padding: 16,
           }}
@@ -192,7 +192,7 @@ function ContratoDaApi({ id }: { id?: string }) {
         !aviso && (
           <div
             style={{
-              background: "#f1f0ff",
+              background: "#eff6ff",
               border: "1px dashed #dcdceb",
               borderRadius: 12,
               padding: 24,

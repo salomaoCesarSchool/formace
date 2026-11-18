@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Button from "../components/Button";
 import Select from "../components/Select";
+import PageHeader from "../components/PageHeader";
 import { api, mensagemDeErro, baixarArquivo } from "../api/axios";
 import type { FluxoDiario, LancamentoFinanceiro, RelatorioResumo } from "../types";
 
@@ -175,7 +176,7 @@ function relatorioHTML(ano: string, d: Consolidado): string {
   .sub { text-align: center; color: #777; margin: 0 0 20px; font-size: 11px; }
   h2 { font-size: 13px; margin: 20px 0 6px; color: #4a4cb0; }
   table { width: 100%; border-collapse: collapse; }
-  td, th { padding: 6px 8px; border-bottom: 1px solid #e5e5ef; text-align: left; }
+  td, th { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
   th { color: #777; font-weight: 600; font-size: 11px; }
   .n { text-align: right; white-space: nowrap; }
   .total td { font-weight: 700; border-bottom: 2px solid #1a1a2e; }
@@ -371,17 +372,15 @@ function Relatorio() {
 
   return (
     <main style={{ padding: "28px 36px", fontFamily: "'Nunito', sans-serif" }}>
-      <h1 style={{ fontSize: 20, marginBottom: 2, color: "#1a1a2e" }}>
-        Relatórios / Ministério Público
-      </h1>
-      <p style={{ color: "#999", fontSize: 12, marginBottom: 24 }}>
-        Exportação para prestação de contas anual
-      </p>
+      <PageHeader
+        titulo="Relatórios / Ministério Público de Sergipe"
+        subtitulo="Prestação de contas anual ao MP-SE • exportação dos registros financeiros"
+      />
 
       <section
         style={{
           background: "#fff",
-          border: "1px solid #e5e5ef",
+          border: "1px solid #e2e8f0",
           borderRadius: 12,
           padding: 20,
           maxWidth: 900,
@@ -395,7 +394,7 @@ function Relatorio() {
           style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
         >
           <div>
-            <label style={rotulo}>Período</label>
+            <label style={rotulo}>Período do relatório</label>
             <Select
               style={campoLargo}
               value={periodo}
@@ -412,14 +411,14 @@ function Relatorio() {
               ))}
             </Select>
             {erros.periodo && (
-              <div style={{ color: "#d63031", fontSize: 11, marginTop: 4 }}>
+              <div style={{ color: "#b91c1c", fontSize: 11, marginTop: 4 }}>
                 {erros.periodo}
               </div>
             )}
           </div>
 
           <div>
-            <label style={rotulo}>Formato</label>
+            <label style={rotulo}>Formato de exportação</label>
             <Select
               style={campoLargo}
               value={formato}
@@ -436,15 +435,20 @@ function Relatorio() {
               ))}
             </Select>
             {erros.formato && (
-              <div style={{ color: "#d63031", fontSize: 11, marginTop: 4 }}>
+              <div style={{ color: "#b91c1c", fontSize: 11, marginTop: 4 }}>
                 {erros.formato}
               </div>
             )}
           </div>
         </div>
 
+        <p style={{ color: "#94a3b8", fontSize: 12, margin: "14px 0 0" }}>
+          Confira o período e os lançamentos financeiros antes de gerar o
+          relatório para conferência.
+        </p>
+
         {aviso && (
-          <div style={{ color: "#d63031", fontSize: 11, marginTop: 10 }}>
+          <div style={{ color: "#b91c1c", fontSize: 11, marginTop: 10 }}>
             {aviso}
           </div>
         )}
@@ -487,7 +491,7 @@ function Relatorio() {
             style={{
               width: "100%",
               height: "70vh",
-              border: "1px solid #e5e5ef",
+              border: "1px solid #e2e8f0",
               borderRadius: 10,
               background: "#fff",
             }}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { api, mensagemDeErro, sessaoAtual } from "../api/axios";
+import { api, mensagemDeErro } from "../api/axios";
 import { formatBRL, formatMesReferencia } from "../utils/format";
+import PageHeader from "../components/PageHeader";
+import { CORES } from "../theme";
 import type { DashboardData } from "../types";
 
 const brl = (n: number) =>
@@ -27,23 +29,22 @@ function mesExtenso(mes: string | undefined): string {
   return `${nomes[indice] ?? ""} de ${mes.slice(0, 4)}`;
 }
 
-const statusCores: Record<string, string> = {
-  PAGO: "#e4e0fb",
-  PENDENTE: "#c9c4f7",
-  ATRASADO: "#f7c4c4",
-  CANCELADO: "#ececef",
+/** Cores dos chips de status conforme o Figma (pago verde, atraso vermelho...). */
+const statusCores: Record<string, { bg: string; texto: string }> = {
+  PAGO: CORES.verde,
+  PENDENTE: CORES.azul,
+  ATRASADO: CORES.vermelho,
+  CANCELADO: CORES.cinza,
 };
 
 /**
- * Dashboard (visual das telas novas): indicadores, ultimos lancamentos e alertas,
+ * Dashboard (visual do Figma): indicadores, ultimos lancamentos e alertas,
  * alimentados por GET /api/dashboard.
  */
 export default function Dashboard() {
   const [dados, setDados] = useState<DashboardData | null>(null);
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(true);
-
-  const usuario = sessaoAtual();
 
   useEffect(() => {
     api
@@ -80,56 +81,22 @@ export default function Dashboard() {
 
   return (
     <main style={{ padding: "28px 36px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: 24,
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: 20, marginBottom: 2, color: "#1a1a2e" }}>
-            Dashboard
-          </h1>
-          <p style={{ color: "#999", fontSize: 12 }}>
-            Visão geral da carteira · {mesExtenso(dados?.mesReferencia)}
-          </p>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            border: "1px solid #e5e5ef",
-            borderRadius: 20,
-            padding: "4px 12px 4px 4px",
-            fontSize: 12,
-            color: "#555",
-          }}
-        >
-          <span
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: "50%",
-              background: "#4b3fd6",
-              display: "inline-block",
-            }}
-          />
-          {usuario?.role ?? "Usuário"}
-        </div>
-      </div>
+      <PageHeader
+        titulo="Visão geral"
+        subtitulo={`Visão gerencial da fundação · ${mesExtenso(dados?.mesReferencia)}`}
+      />
 
       {carregando && (
-        <p style={{ color: "#999", fontSize: 13 }}>Carregando indicadores...</p>
+        <p style={{ color: CORES.textoSuave, fontSize: 13 }}>
+          Carregando indicadores...
+        </p>
       )}
 
       {erro && (
         <div
           style={{
-            background: "#fdecec",
-            color: "#d63031",
+            background: "#fee2e2",
+            color: "#b91c1c",
             borderRadius: 10,
             padding: 16,
             fontSize: 13,
@@ -142,45 +109,49 @@ export default function Dashboard() {
 
       {!carregando && !erro && dados && (
         <>
-          <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
+          <div style={{ display: "flex", gap: 14, marginBottom: 20, flexWrap: "wrap" }}>
             {indicadores.map((ind, i) => (
               <div
                 key={i}
                 style={{
-                  flex: 1,
-                  border: "1px solid #e5e5ef",
-                  borderRadius: 10,
-                  padding: 16,
+                  flex: "1 1 220px",
+                  border: `1px solid ${CORES.borda}`,
+                  borderRadius: 12,
+                  padding: 20,
+                  background: "#fff",
                 }}
               >
-                <p style={{ fontSize: 12, color: "#999", marginBottom: 6 }}>
+                <p style={{ fontSize: 13, color: CORES.textoSuave, marginBottom: 8 }}>
                   {ind.titulo}
                 </p>
                 <h2
                   style={{
                     margin: "2px 0",
-                    fontWeight: 600,
-                    fontSize: 32,
+                    fontWeight: 700,
+                    fontSize: 34,
                     lineHeight: "100%",
-                    letterSpacing: "0.23px",
-                    color: "rgba(14, 26, 194, 0.5)",
+                    letterSpacing: "-0.5px",
+                    color: "#16376e",
                   }}
                 >
                   {ind.valor}
                 </h2>
-                <p style={{ fontSize: 11, color: "#aaa" }}>{ind.legenda}</p>
+                <p style={{ fontSize: 12, color: CORES.textoSuave, marginTop: 8 }}>
+                  {ind.legenda}
+                </p>
               </div>
             ))}
           </div>
 
-          <div style={{ display: "flex", gap: 14 }}>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
             <div
               style={{
-                flex: 2,
-                border: "1px solid #e5e5ef",
-                borderRadius: 10,
-                padding: 16,
+                flex: "2 1 420px",
+                border: `1px solid ${CORES.borda}`,
+                borderRadius: 12,
+                padding: 20,
                 minWidth: 0,
+                background: "#fff",
               }}
             >
               <div
@@ -188,19 +159,19 @@ export default function Dashboard() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  marginBottom: 12,
+                  marginBottom: 14,
                 }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: CORES.titulo, margin: 0 }}>
                   Últimos lançamentos financeiros
                 </h3>
                 <span
                   style={{
-                    fontSize: 11,
-                    border: "1px solid #e5e5ef",
-                    borderRadius: 6,
-                    padding: "3px 10px",
-                    color: "#888",
+                    fontSize: 12,
+                    border: `1px solid ${CORES.borda}`,
+                    borderRadius: 8,
+                    padding: "4px 12px",
+                    color: CORES.textoSuave,
                   }}
                 >
                   {formatMesReferencia(dados.mesReferencia)}
@@ -208,12 +179,12 @@ export default function Dashboard() {
               </div>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
-                  <tr style={{ color: "#999", fontSize: 12, textAlign: "left" }}>
-                    <th style={{ fontWeight: 400, paddingBottom: 8 }}>Imóvel</th>
-                    <th style={{ fontWeight: 400, paddingBottom: 8 }}>Locatário</th>
-                    <th style={{ fontWeight: 400, paddingBottom: 8 }}>Tipo</th>
-                    <th style={{ fontWeight: 400, paddingBottom: 8 }}>Valor</th>
-                    <th style={{ fontWeight: 400, paddingBottom: 8 }}>Status</th>
+                  <tr style={{ color: "#64748b", fontSize: 12, textAlign: "left" }}>
+                    <th style={{ fontWeight: 600, paddingBottom: 10 }}>Imóvel</th>
+                    <th style={{ fontWeight: 600, paddingBottom: 10 }}>Locatário</th>
+                    <th style={{ fontWeight: 600, paddingBottom: 10 }}>Tipo</th>
+                    <th style={{ fontWeight: 600, paddingBottom: 10 }}>Valor</th>
+                    <th style={{ fontWeight: 600, paddingBottom: 10 }}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -224,7 +195,7 @@ export default function Dashboard() {
                         style={{
                           padding: "16px 0",
                           textAlign: "center",
-                          color: "#bbb",
+                          color: CORES.textoSuave,
                           fontSize: 13,
                         }}
                       >
@@ -232,76 +203,97 @@ export default function Dashboard() {
                       </td>
                     </tr>
                   )}
-                  {dados.ultimosLancamentos.map((l) => (
-                    <tr
-                      key={l.id}
-                      style={{
-                        fontSize: 13,
-                        color: "#999",
-                        borderTop: "1px solid #f0f0f5",
-                      }}
-                    >
-                      <td style={{ padding: "8px 0" }}>
-                        {l.imovel.codigo} · {l.imovel.endereco}
-                      </td>
-                      <td style={{ padding: "8px 0" }}>{l.locatario?.nome ?? "—"}</td>
-                      <td style={{ padding: "8px 0" }}>
-                        {l.natureza === "SAIDA" ? "Saída" : "Aluguel"}
-                      </td>
-                      <td style={{ padding: "8px 0" }}>{brl(l.valorTotal)}</td>
-                      <td style={{ padding: "8px 0" }}>
-                        <span
-                          style={{
-                            background: statusCores[l.status] ?? "#e4e0fb",
-                            color: "rgba(14, 26, 194, 0.5)",
-                            fontWeight: 600,
-                            borderRadius: 20,
-                            padding: "4px 12px",
-                            fontSize: 11,
-                          }}
-                        >
-                          {l.status.charAt(0) + l.status.slice(1).toLowerCase()}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {dados.ultimosLancamentos.map((l) => {
+                    const cor = statusCores[l.status] ?? CORES.azul;
+                    return (
+                      <tr
+                        key={l.id}
+                        style={{
+                          fontSize: 13,
+                          color: "#334155",
+                          borderTop: `1px solid #f1f5f9`,
+                        }}
+                      >
+                        <td style={{ padding: "10px 0" }}>
+                          {l.imovel.codigo} · {l.imovel.endereco}
+                        </td>
+                        <td style={{ padding: "10px 0" }}>{l.locatario?.nome ?? "—"}</td>
+                        <td style={{ padding: "10px 0" }}>
+                          {l.natureza === "SAIDA" ? "Saída" : "Aluguel"}
+                        </td>
+                        <td style={{ padding: "10px 0" }}>{brl(l.valorTotal)}</td>
+                        <td style={{ padding: "10px 0" }}>
+                          <span
+                            style={{
+                              background: cor.bg,
+                              color: cor.texto,
+                              fontWeight: 600,
+                              borderRadius: 999,
+                              padding: "4px 12px",
+                              fontSize: 11,
+                              display: "inline-block",
+                            }}
+                          >
+                            {l.status.charAt(0) + l.status.slice(1).toLowerCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             <div
               style={{
-                flex: 1,
-                border: "1px solid #e5e5ef",
-                borderRadius: 10,
-                padding: 16,
+                flex: "1 1 280px",
+                border: `1px solid ${CORES.borda}`,
+                borderRadius: 12,
+                padding: 20,
+                background: "#fff",
               }}
             >
-              <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: "#1a1a2e" }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 14, color: CORES.titulo, margin: 0 }}>
                 Alertas
               </h3>
               {dados.alertas.length === 0 && (
-                <p style={{ fontSize: 12, color: "#aaa" }}>Nenhum alerta ativo.</p>
+                <p style={{ fontSize: 13, color: CORES.textoSuave, marginTop: 12 }}>
+                  Nenhum alerta ativo.
+                </p>
               )}
-              {dados.alertas.map((a, i) => (
-                <div
-                  key={`${a.tipo}-${i}`}
-                  style={{
-                    background: a.severidade === "critico" ? "#fdecec" : "#f1f0ff",
-                    color:
-                      a.severidade === "critico"
-                        ? "#d63031"
-                        : "rgba(14, 26, 194, 0.5)",
-                    fontWeight: 600,
-                    padding: 10,
-                    borderRadius: 8,
-                    marginTop: 8,
-                    fontSize: 12,
-                  }}
-                >
-                  {a.mensagem}
-                </div>
-              ))}
+              {dados.alertas.map((a, i) => {
+                const critico = a.severidade === "critico";
+                return (
+                  <div
+                    key={`${a.tipo}-${i}`}
+                    style={{
+                      background: critico ? "#fee2e2" : CORES.fundoDestaque,
+                      border: `1px solid ${critico ? "#fecaca" : "#dbeafe"}`,
+                      color: critico ? "#b91c1c" : CORES.titulo,
+                      padding: "12px 14px",
+                      borderRadius: 10,
+                      marginTop: 10,
+                      fontSize: 13,
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "block",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: critico ? "#b91c1c" : CORES.textoSuave,
+                        marginBottom: 4,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.4px",
+                      }}
+                    >
+                      {a.tipo}
+                    </span>
+                    {a.mensagem}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </>

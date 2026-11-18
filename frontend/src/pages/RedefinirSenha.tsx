@@ -29,12 +29,12 @@ const entrada: CSSProperties = {
   fontFamily: "'Nunito', sans-serif",
   color: "#1a1a2e",
   background: "#fff",
-  boxShadow: "0 2px 10px rgba(108, 92, 231, 0.14)",
+  boxShadow: "0 2px 10px rgba(26, 95, 168, 0.16)",
   outline: "none",
 };
 
 const erroStyle: CSSProperties = {
-  color: "#d63031",
+  color: "#b91c1c",
   fontSize: 11,
   marginTop: 5,
 };
@@ -46,7 +46,7 @@ function Olho({ aberto }: { aberto: boolean }) {
       height="16"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#8689de"
+      stroke="#94a3b8"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -165,7 +165,7 @@ function RedefinirSenha() {
         style={{
           width: "42%",
           minHeight: "100vh",
-          background: `linear-gradient(160deg, rgba(26,26,46,0.88), rgba(108,92,231,0.82)), url(${fundo}) center/cover`,
+          background: `linear-gradient(160deg, rgba(26,26,46,0.88), rgba(26,95,168,0.82)), url(${fundo}) center/cover`,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -202,7 +202,7 @@ function RedefinirSenha() {
             background: "#fff",
             borderRadius: 14,
             padding: "34px 30px",
-            boxShadow: "0 10px 34px rgba(108, 92, 231, 0.16)",
+            boxShadow: "0 10px 34px rgba(26, 95, 168, 0.16)",
           }}
         >
           <h2 style={{ fontSize: 17, fontWeight: 800, color: "#1a1a2e", margin: 0 }}>
@@ -220,7 +220,7 @@ function RedefinirSenha() {
                 borderRadius: 8,
                 padding: "12px 14px",
                 fontSize: 11,
-                color: "#d63031",
+                color: "#b91c1c",
                 marginBottom: 18,
               }}
             >
@@ -247,8 +247,8 @@ function RedefinirSenha() {
                 onClick={() => navigate("/login")}
                 style={{
                   width: "100%",
-                  background: "#6c6fd0",
-                  boxShadow: "0 4px 14px rgba(108, 111, 208, 0.45)",
+                  background: "#1a5fa8",
+                  boxShadow: "0 4px 14px rgba(26, 95, 168, 0.35)",
                 }}
               >
                 Ir para o login
@@ -285,7 +285,7 @@ function RedefinirSenha() {
                     borderRadius: 8,
                     padding: "12px 14px",
                     fontSize: 11,
-                    color: "#d63031",
+                    color: "#b91c1c",
                     marginBottom: 18,
                   }}
                 >
@@ -299,8 +299,8 @@ function RedefinirSenha() {
                   disabled={carregando}
                   style={{
                     width: 190,
-                    background: "#6c6fd0",
-                    boxShadow: "0 4px 14px rgba(108, 111, 208, 0.45)",
+                    background: "#1a5fa8",
+                    boxShadow: "0 4px 14px rgba(26, 95, 168, 0.35)",
                   }}
                 >
                   {carregando ? "Salvando..." : "Salvar nova senha"}
@@ -316,7 +316,7 @@ function RedefinirSenha() {
               style={{
                 border: "none",
                 background: "none",
-                color: "#8689de",
+                color: "#4457d9",
                 cursor: "pointer",
                 fontSize: 11,
                 fontFamily: "'Nunito', sans-serif",
