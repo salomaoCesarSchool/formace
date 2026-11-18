@@ -116,6 +116,29 @@ export interface Alerta {
   severidade: SeveridadeAlerta;
 }
 
+/** Situação dos pagamentos de aluguel no mês (gráfico do dashboard). */
+export interface PagamentosMes {
+  pagos: number;
+  aVencer: number;
+  emAtraso: number;
+  total: number;
+}
+
+/** Inquilinos que ainda não pagaram o aluguel do mês vigente. */
+export interface Inadimplentes {
+  quantidade: number;
+  valorEmAberto: number;
+}
+
+/** Cobrança pendente: nome, imóvel, valor, vencimento e dias em atraso. */
+export interface CobrancaPendente {
+  locatario: string;
+  imovel: string;
+  valor: number;
+  dataVencimento: string;
+  diasAtraso: number;
+}
+
 export interface DashboardData {
   totalImoveis: number;
   imoveisOcupados: number;
@@ -126,6 +149,9 @@ export interface DashboardData {
   receitaMes: number;
   pendentesMes: number;
   lancamentosPendentes: number;
+  pagamentosMes: PagamentosMes;
+  inadimplentes: Inadimplentes;
+  cobrancasPendentes: CobrancaPendente[];
   ultimosLancamentos: LancamentoFinanceiro[];
   alertas: Alerta[];
 }

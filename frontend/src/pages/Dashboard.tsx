@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, mensagemDeErro } from "../api/axios";
-import { formatBRL, formatMesReferencia } from "../utils/format";
+import { formatBRL, formatData, formatMesReferencia } from "../utils/format";
 import PageHeader from "../components/PageHeader";
 import { CORES } from "../theme";
 import type { DashboardData } from "../types";
@@ -65,16 +65,25 @@ export default function Dashboard() {
           titulo: "Imóveis ocupados",
           valor: `${dados.imoveisOcupados}/${dados.totalImoveis}`,
           legenda: `${taxaOcupacao}% de ocupação · ${dados.imoveisVagos} vago(s)`,
+          destaque: false,
         },
         {
           titulo: `Receita de aluguel (${formatMesReferencia(dados.mesReferencia)})`,
           valor: brl(dados.receitaMes),
           legenda: `${formatBRL(dados.pendentesMes)} em aberto no mês`,
+          destaque: false,
         },
         {
           titulo: "Contratos a vencer (90 dias)",
           valor: String(dados.contratosAVencer),
           legenda: `${dados.contratosAtivos} contrato(s) ativo(s) · requer atenção`,
+          destaque: false,
+        },
+        {
+          titulo: "Inquilinos inadimplentes",
+          valor: String(dados.inadimplentes.quantidade),
+          legenda: `${formatBRL(dados.inadimplentes.valorEmAberto)} em aberto`,
+          destaque: true,
         },
       ]
     : [];
@@ -115,10 +124,10 @@ export default function Dashboard() {
                 key={i}
                 style={{
                   flex: "1 1 220px",
-                  border: `1px solid ${CORES.borda}`,
+                  border: `1px solid ${ind.destaque ? "#bfdbfe" : CORES.borda}`,
                   borderRadius: 12,
                   padding: 20,
-                  background: "#fff",
+                  background: ind.destaque ? CORES.fundoDestaque : "#fff",
                 }}
               >
                 <p style={{ fontSize: 13, color: CORES.textoSuave, marginBottom: 8 }}>
@@ -131,7 +140,7 @@ export default function Dashboard() {
                     fontSize: 34,
                     lineHeight: "100%",
                     letterSpacing: "-0.5px",
-                    color: "#16376e",
+                    color: ind.destaque ? CORES.primaria : "#16376e",
                   }}
                 >
                   {ind.valor}
@@ -141,6 +150,195 @@ export default function Dashboard() {
                 </p>
               </div>
             ))}
+          </div>
+
+          {/* Gráfico de pagamentos + cobranças pendentes */}
+          <div style={{ display: "flex", gap: 14, marginBottom: 20, flexWrap: "wrap" }}>
+            <div
+              style={{
+                flex: "1 1 320px",
+                border: `1px solid ${CORES.borda}`,
+                borderRadius: 12,
+                padding: 20,
+                background: "#fff",
+                minWidth: 0,
+              }}
+            >
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: CORES.titulo, margin: 0 }}>
+                Pagamentos dos aluguéis
+              </h3>
+
+              {[
+                { rotulo: "Pagos", valor: dados.pagamentosMes.pagos, cor: CORES.primaria },
+                { rotulo: "A vencer", valor: dados.pagamentosMes.aVencer, cor: "#7da9db" },
+                { rotulo: "Em atraso", valor: dados.pagamentosMes.emAtraso, cor: "#c6d9ee" },
+              ].map((linha) => {
+                const total = dados.pagamentosMes.total || 1;
+                const pct = Math.round((linha.valor * 100) / total);
+                return (
+                  <div
+                    key={linha.rotulo}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      margin: "16px 0",
+                    }}
+                  >
+                    <span style={{ width: 72, fontSize: 13, color: CORES.texto }}>
+                      {linha.rotulo}
+                    </span>
+                    <div
+                      style={{
+                        flex: 1,
+                        height: 12,
+                        background: "#f1f5f9",
+                        borderRadius: 999,
+                        overflow: "hidden",
+                        minWidth: 60,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${pct}%`,
+                          height: "100%",
+                          background: linha.cor,
+                          borderRadius: 999,
+                          transition: "width 0.4s ease",
+                        }}
+                      />
+                    </div>
+                    <span
+                      style={{
+                        width: 104,
+                        textAlign: "right",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: CORES.titulo,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {linha.valor}{" "}
+                      <span style={{ fontWeight: 400, color: CORES.textoSuave }}>
+                        ≈{pct}%
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+
+              <p style={{ fontSize: 12, color: CORES.textoSuave, margin: "18px 0 0" }}>
+                {dados.pagamentosMes.total} aluguéis ·{" "}
+                {Math.max(
+                  0,
+                  dados.pagamentosMes.total - dados.pagamentosMes.pagos,
+                )}{" "}
+                ainda não pagos
+              </p>
+            </div>
+
+            <div
+              style={{
+                flex: "2 1 480px",
+                border: `1px solid ${CORES.borda}`,
+                borderRadius: 12,
+                padding: 20,
+                background: "#fff",
+                minWidth: 0,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  gap: 12,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 600, color: CORES.titulo, margin: 0 }}>
+                    Cobranças pendentes
+                  </h3>
+                  <p style={{ fontSize: 12, color: CORES.textoSuave, margin: "4px 0 0" }}>
+                    {dados.inadimplentes.quantidade} inquilino
+                    {dados.inadimplentes.quantidade === 1 ? "" : "s"} em atraso ·{" "}
+                    {formatBRL(dados.inadimplentes.valorEmAberto)} a receber
+                  </p>
+                </div>
+              </div>
+
+              <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
+                <thead>
+                  <tr style={{ color: "#64748b", fontSize: 12, textAlign: "left" }}>
+                    <th style={{ fontWeight: 600, paddingBottom: 8 }}>Inquilino/imóvel</th>
+                    <th style={{ fontWeight: 600, paddingBottom: 8 }}>Vencimento</th>
+                    <th style={{ fontWeight: 600, paddingBottom: 8, textAlign: "right" }}>
+                      Valor
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(dados.cobrancasPendentes ?? []).length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={3}
+                        style={{
+                          padding: "16px 0",
+                          textAlign: "center",
+                          color: CORES.textoSuave,
+                          fontSize: 13,
+                        }}
+                      >
+                        Nenhuma cobrança vencida neste mês.
+                      </td>
+                    </tr>
+                  )}
+                  {(dados.cobrancasPendentes ?? []).map((c, i) => (
+                    <tr
+                      key={`${c.locatario}-${i}`}
+                      style={{
+                        fontSize: 13,
+                        color: "#334155",
+                        borderTop: "1px solid #f1f5f9",
+                      }}
+                    >
+                      <td style={{ padding: "10px 0" }}>
+                        <strong style={{ fontWeight: 600 }}>{c.locatario}</strong>
+                        <span style={{ display: "block", fontSize: 11, color: "#94a3b8" }}>
+                          {c.imovel}
+                        </span>
+                      </td>
+                      <td style={{ padding: "10px 0", whiteSpace: "nowrap" }}>
+                        {formatData(c.dataVencimento)}
+                        <span
+                          style={{
+                            display: "block",
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: c.diasAtraso > 0 ? CORES.vermelho.texto : CORES.ambar.texto,
+                          }}
+                        >
+                          {c.diasAtraso > 0
+                            ? `${c.diasAtraso} dia${c.diasAtraso === 1 ? "" : "s"} em atraso`
+                            : "vence hoje"}
+                        </span>
+                      </td>
+                      <td
+                        style={{
+                          padding: "10px 0",
+                          textAlign: "right",
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {formatBRL(c.valor)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>

@@ -7,6 +7,7 @@ import com.formace.enums.NaturezaLancamento;
 import com.formace.enums.StatusContrato;
 import com.formace.enums.StatusImovel;
 import com.formace.enums.StatusLancamento;
+import com.formace.enums.TipoLancamento;
 import com.formace.repository.ContratoRepository;
 import com.formace.repository.ImovelRepository;
 import com.formace.repository.LancamentoFinanceiroRepository;
@@ -60,6 +61,46 @@ public class DashboardService {
                 StatusLancamento.PENDENTE, NaturezaLancamento.ENTRADA)
                 + lancamentoRepository.countByStatusAndNatureza(StatusLancamento.ATRASADO, NaturezaLancamento.ENTRADA);
 
+        // ---- Grafico "Pagamentos dos alugueis" do mes vigente ----
+        long pagosAluguel = lancamentoRepository.countByTipoAndMesReferenciaAndStatusAndNatureza(
+                TipoLancamento.ALUGUEL, mes, StatusLancamento.PAGO, NaturezaLancamento.ENTRADA);
+        long aVencerAluguel = lancamentoRepository.countByTipoAndMesReferenciaAndStatusAndNatureza(
+                TipoLancamento.ALUGUEL, mes, StatusLancamento.PENDENTE, NaturezaLancamento.ENTRADA);
+        long emAtrasoAluguel = lancamentoRepository.countByTipoAndMesReferenciaAndStatusAndNatureza(
+                TipoLancamento.ALUGUEL, mes, StatusLancamento.ATRASADO, NaturezaLancamento.ENTRADA);
+        DashboardResponse.PagamentosMes pagamentosMes = new DashboardResponse.PagamentosMes(
+                pagosAluguel, aVencerAluguel, emAtrasoAluguel,
+                pagosAluguel + aVencerAluguel + emAtrasoAluguel);
+
+        // ---- Inadimplencia e lista de cobrancas pendentes ----
+        List<StatusLancamento> emAberto = List.of(StatusLancamento.PENDENTE, StatusLancamento.ATRASADO);
+        List<LancamentoFinanceiro> cobrancasBrutas = lancamentoRepository.buscarCobrancasVencidas(
+                TipoLancamento.ALUGUEL, mes, NaturezaLancamento.ENTRADA, emAberto, hoje);
+        BigDecimal valorEmAberto = lancamentoRepository.somarCobrancasVencidas(
+                TipoLancamento.ALUGUEL, mes, NaturezaLancamento.ENTRADA, emAberto, hoje);
+
+        long inadimplentes = cobrancasBrutas.stream()
+                .map(l -> l.getLocatario() != null ? l.getLocatario().getId() : null)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .count();
+        if (inadimplentes == 0) {
+            // lancamentos sem locatario vinculado: conta pelo proprio atraso
+            inadimplentes = cobrancasBrutas.size();
+        }
+        DashboardResponse.Inadimplentes inadimplentesKpi =
+                new DashboardResponse.Inadimplentes(inadimplentes, valorEmAberto);
+
+        List<DashboardResponse.CobrancaPendente> cobrancas = cobrancasBrutas.stream()
+                .limit(15)
+                .map(l -> new DashboardResponse.CobrancaPendente(
+                        l.getLocatario() != null ? l.getLocatario().getNome() : "Locatário não informado",
+                        formatarImovel(l),
+                        l.getValorTotal(),
+                        l.getDataVencimento(),
+                        (int) java.time.temporal.ChronoUnit.DAYS.between(l.getDataVencimento(), hoje)))
+                .toList();
+
         List<LancamentoFinanceiro> ultimos = lancamentoRepository
                 .buscarRecentes(PageRequest.of(0, 10));
 
@@ -98,7 +139,26 @@ public class DashboardService {
                 receitaMes,
                 pendentesMes,
                 pendentes,
+                pagamentosMes,
+                inadimplentesKpi,
+                cobrancas,
                 ultimos,
                 alertas);
+    }
+
+    /** Formata o imovel da cobranca: "Rua X, 123 - Bairro". */
+    private static String formatarImovel(LancamentoFinanceiro l) {
+        var imovel = l.getImovel();
+        if (imovel == null) {
+            return "Imóvel não informado";
+        }
+        StringBuilder sb = new StringBuilder(imovel.getEndereco() != null ? imovel.getEndereco() : "Endereço não informado");
+        if (imovel.getNumero() != null && !imovel.getNumero().isBlank()) {
+            sb.append(", ").append(imovel.getNumero());
+        }
+        if (imovel.getBairro() != null && !imovel.getBairro().isBlank()) {
+            sb.append(" - ").append(imovel.getBairro());
+        }
+        return sb.toString();
     }
 }

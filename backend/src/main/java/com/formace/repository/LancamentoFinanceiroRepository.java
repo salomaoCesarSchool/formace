@@ -3,6 +3,7 @@ package com.formace.repository;
 import com.formace.entity.LancamentoFinanceiro;
 import com.formace.enums.NaturezaLancamento;
 import com.formace.enums.StatusLancamento;
+import com.formace.enums.TipoLancamento;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -105,4 +106,43 @@ public interface LancamentoFinanceiroRepository extends JpaRepository<Lancamento
     BigDecimal somarMultaJuros(@Param("ano") int ano, @Param("pago") StatusLancamento pago);
 
     long countByStatusAndNatureza(StatusLancamento status, NaturezaLancamento natureza);
+
+    /** Contagem por tipo/mes/status para o grafico de pagamentos de aluguel. */
+    long countByTipoAndMesReferenciaAndStatusAndNatureza(TipoLancamento tipo,
+                                                         String mesReferencia,
+                                                         StatusLancamento status,
+                                                         NaturezaLancamento natureza);
+
+    /** Cobranças em aberto (nao pagas) e ja vencidas do mes — lista do dashboard. */
+    @Query("""
+            select l from LancamentoFinanceiro l
+              left join fetch l.imovel i
+              left join fetch l.locatario
+             where l.tipo = :tipo
+               and l.mesReferencia = :mes
+               and l.natureza = :natureza
+               and l.status in :status
+               and l.dataVencimento <= :hoje
+             order by l.dataVencimento asc, l.id asc
+            """)
+    List<LancamentoFinanceiro> buscarCobrancasVencidas(@Param("tipo") TipoLancamento tipo,
+                                                       @Param("mes") String mes,
+                                                       @Param("natureza") NaturezaLancamento natureza,
+                                                       @Param("status") List<StatusLancamento> status,
+                                                       @Param("hoje") LocalDate hoje);
+
+    /** Soma em aberto das cobranças vencidas do mes (total a receber). */
+    @Query("""
+            select coalesce(sum(l.valorTotal), 0) from LancamentoFinanceiro l
+             where l.tipo = :tipo
+               and l.mesReferencia = :mes
+               and l.natureza = :natureza
+               and l.status in :status
+               and l.dataVencimento <= :hoje
+            """)
+    BigDecimal somarCobrancasVencidas(@Param("tipo") TipoLancamento tipo,
+                                     @Param("mes") String mes,
+                                     @Param("natureza") NaturezaLancamento natureza,
+                                     @Param("status") List<StatusLancamento> status,
+                                     @Param("hoje") LocalDate hoje);
 }
