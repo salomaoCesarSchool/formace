@@ -37,6 +37,19 @@ public class Locatario {
     @Column(name = "cpf_cnpj", nullable = false, unique = true, length = 20)
     private String cpfCnpj;
 
+    /** RG ou outro documento oficial de identificacao. */
+    @Column(name = "rg", length = 30)
+    private String rg;
+
+    @Column(name = "data_nascimento")
+    private java.time.LocalDate dataNascimento;
+
+    @Column(name = "estado_civil", length = 30)
+    private String estadoCivil;
+
+    @Column(name = "profissao", length = 80)
+    private String profissao;
+
     @Column(name = "telefone", length = 25)
     private String telefone;
 

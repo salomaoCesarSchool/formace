@@ -23,6 +23,11 @@ export interface Locatario {
   id: number;
   nome: string;
   cpfCnpj: string;
+  /** RG ou outro documento oficial de identificação. */
+  rg?: string;
+  dataNascimento?: string;
+  estadoCivil?: string;
+  profissao?: string;
   telefone?: string;
   email?: string;
   endereco?: string;
@@ -45,6 +50,7 @@ export interface Imovel {
   metragem?: number;
   valorAluguel: number;
   iptuMensal: number;
+  condominio?: number;
   status: StatusImovel;
   locatario?: Locatario;
   observacao?: string;
@@ -114,6 +120,23 @@ export interface Alerta {
   tipo: string;
   mensagem: string;
   severidade: SeveridadeAlerta;
+}
+
+/** Modalidade de garantia locatícia escolhida no contrato. */
+export type ModalidadeGarantia =
+  | 'SEM_GARANTIA'
+  | 'FIADOR'
+  | 'CAUCAO'
+  | 'SEGURO';
+
+/** Documento obrigatório configurável por modalidade de garantia. */
+export interface DocumentoObrigatorio {
+  id: number;
+  modalidade: ModalidadeGarantia | string;
+  destinatario: 'CLIENTE' | 'FIADOR' | string;
+  nome: string;
+  obrigatorio: boolean;
+  criadoEm?: string;
 }
 
 /** Situação dos pagamentos de aluguel no mês (gráfico do dashboard). */

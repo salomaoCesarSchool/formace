@@ -79,6 +79,7 @@ public class CadastroService {
                 .metragem(req.metragem())
                 .valorAluguel(req.valorAluguel())
                 .iptuMensal(req.iptuMensal())
+                .condominio(req.condominio())
                 .status(req.status())
                 .observacao(req.observacao())
                 .build();
@@ -109,6 +110,7 @@ public class CadastroService {
         imovel.setMetragem(req.metragem());
         imovel.setValorAluguel(req.valorAluguel());
         imovel.setIptuMensal(req.iptuMensal());
+        imovel.setCondominio(req.condominio());
         imovel.setStatus(req.status());
         imovel.setObservacao(req.observacao());
         aplicarLocatario(imovel, req);
@@ -157,6 +159,10 @@ public class CadastroService {
         return locatarioRepository.save(Locatario.builder()
                 .nome(req.nome().trim())
                 .cpfCnpj(req.cpfCnpj().trim())
+                .rg(req.rg())
+                .dataNascimento(req.dataNascimento())
+                .estadoCivil(req.estadoCivil())
+                .profissao(req.profissao())
                 .telefone(req.telefone())
                 .email(req.email())
                 .endereco(req.endereco())
@@ -172,6 +178,10 @@ public class CadastroService {
 
         locatario.setNome(req.nome().trim());
         locatario.setCpfCnpj(req.cpfCnpj().trim());
+        locatario.setRg(req.rg());
+        locatario.setDataNascimento(req.dataNascimento());
+        locatario.setEstadoCivil(req.estadoCivil());
+        locatario.setProfissao(req.profissao());
         locatario.setTelefone(req.telefone());
         locatario.setEmail(req.email());
         locatario.setEndereco(req.endereco());

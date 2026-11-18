@@ -43,6 +43,9 @@ public record ImovelRequest(
         @DecimalMin(value = "0.00", message = "Valor do IPTU nao pode ser negativo")
         BigDecimal iptuMensal,
 
+        @DecimalMin(value = "0.00", message = "Valor do condominio nao pode ser negativo")
+        BigDecimal condominio,
+
         @NotNull(message = "Status e obrigatorio")
         StatusImovel status,
 

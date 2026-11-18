@@ -76,6 +76,10 @@ public class Imovel {
     @Column(name = "iptu_mensal", nullable = false, precision = 12, scale = 2)
     private BigDecimal iptuMensal;
 
+    /** Valor do condominio mensal (quando houver). */
+    @Column(name = "condominio", precision = 12, scale = 2)
+    private BigDecimal condominio;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private StatusImovel status;

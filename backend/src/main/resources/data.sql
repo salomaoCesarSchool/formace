@@ -595,3 +595,23 @@ SELECT setval(pg_get_serial_sequence('imovel', 'id'), (SELECT COALESCE(MAX(id), 
 SELECT setval(pg_get_serial_sequence('contrato', 'id'), (SELECT COALESCE(MAX(id), 1) FROM contrato));
 SELECT setval(pg_get_serial_sequence('lancamento_financeiro', 'id'), (SELECT COALESCE(MAX(id), 1) FROM lancamento_financeiro));
 
+
+-- Documentos obrigatorios por modalidade de garantia (reexecutavel) -----------
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (1, 'FIADOR', 'CLIENTE', 'RG ou CNH', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (2, 'FIADOR', 'CLIENTE', 'CPF', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (3, 'FIADOR', 'CLIENTE', 'Comprovante de residencia', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (4, 'FIADOR', 'CLIENTE', 'Certidao de estado civil', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (5, 'FIADOR', 'FIADOR', 'RG ou CNH', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (6, 'FIADOR', 'FIADOR', 'CPF', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (7, 'FIADOR', 'FIADOR', 'Comprovante de residencia', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (8, 'FIADOR', 'FIADOR', 'Comprovante de renda', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (9, 'FIADOR', 'FIADOR', 'Certidao de estado civil', false) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (10, 'SEM_GARANTIA', 'CLIENTE', 'RG ou CNH', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (11, 'SEM_GARANTIA', 'CLIENTE', 'CPF', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (12, 'SEM_GARANTIA', 'CLIENTE', 'Comprovante de residencia', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (13, 'CAUCAO', 'CLIENTE', 'RG ou CNH', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (14, 'CAUCAO', 'CLIENTE', 'Comprovante de conta poupanca', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (15, 'SEGURO', 'CLIENTE', 'RG ou CNH', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO documento_obrigatorio (id, modalidade, destinatario, nome, obrigatorio) VALUES (16, 'SEGURO', 'CLIENTE', 'Declaracao do corretor de seguros', true) ON CONFLICT (id) DO NOTHING;
+
+SELECT setval(pg_get_serial_sequence('documento_obrigatorio', 'id'), (SELECT COALESCE(MAX(id), 1) FROM documento_obrigatorio));
