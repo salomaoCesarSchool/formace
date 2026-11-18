@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { ContratoCriado } from "../components/NovoContrato";
+import type { ContratoCriado } from "../utils/contratoDocumento";
 
 /* Guarda os contratos gerados pelo assistente "+ Novo contrato PDF" no navegador
    (localStorage), para todas as telas enxergarem e para nao sumirem ao recarregar.

@@ -22,6 +22,7 @@ public interface ContratoRepository extends JpaRepository<Contrato, Long> {
               left join fetch c.imovel i
               left join fetch i.locatario
               left join fetch c.locatario
+              left join fetch c.fiador
              order by c.dataFim asc
             """)
     List<Contrato> findByOrderByDataFimAsc();
@@ -31,6 +32,7 @@ public interface ContratoRepository extends JpaRepository<Contrato, Long> {
               left join fetch c.imovel i
               left join fetch i.locatario
               left join fetch c.locatario
+              left join fetch c.fiador
              where c.status = :status
              order by c.dataFim asc
             """)
@@ -41,6 +43,7 @@ public interface ContratoRepository extends JpaRepository<Contrato, Long> {
             select c from Contrato c
               left join fetch c.imovel
               left join fetch c.locatario
+              left join fetch c.fiador
              where c.status = :status
                and c.dataFim >= :de
                and c.dataFim <= :ate
@@ -66,6 +69,7 @@ public interface ContratoRepository extends JpaRepository<Contrato, Long> {
               left join fetch c.imovel i
               left join fetch i.locatario
               left join fetch c.locatario
+              left join fetch c.fiador
              where c.id = :id
             """)
     Optional<Contrato> findById(@Param("id") Long id);

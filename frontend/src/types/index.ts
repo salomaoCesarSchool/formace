@@ -67,9 +67,32 @@ export interface Contrato {
   valorMensal: number;
   diaVencimento: number;
   status: StatusContrato;
+  /** Modelo do contrato (Locação residencial, comercial...). */
+  modelo?: string;
+  /** Modalidade da garantia locatícia (FIADOR, CAUCAO, SEM_GARANTIA, SEGURO). */
+  modalidadeGarantia?: string;
+  indiceReajuste?: string;
+  periodicidadeReajuste?: string;
+  /** Fiador vinculado (quando a garantia é por fiador). */
+  fiador?: Fiador;
   pdfUrl?: string;
   pdfNome?: string;
   observacao?: string;
+  criadoEm?: string;
+}
+
+/** Fiador do contrato de locação (garantia FIADOR). */
+export interface Fiador {
+  id?: number;
+  nome: string;
+  cpf: string;
+  rg?: string;
+  dataNascimento?: string;
+  estadoCivil?: string;
+  profissao?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
   criadoEm?: string;
 }
 

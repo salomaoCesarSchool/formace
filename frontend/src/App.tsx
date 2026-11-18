@@ -9,6 +9,7 @@ import Imoveis from './pages/Imoveis';
 import Financeiro from './pages/Financeiro';
 import Contratos from './pages/Contratos';
 import ContratoDetalhe from './pages/ContratoDetalhe';
+import NovoContrato from './pages/NovoContrato';
 import Relatorio from './pages/Relatorio';
 import { sessaoAtual } from './api/axios';
 
@@ -40,6 +41,8 @@ export default function App() {
         <Route path="imoveis" element={<Imoveis />} />
         <Route path="financeiro" element={<Financeiro />} />
         <Route path="contratos" element={<Contratos />} />
+        {/* Estático antes de :id — o React Router prioriza segmentos literais */}
+        <Route path="contratos/novo" element={<NovoContrato />} />
         <Route path="contratos/:id" element={<ContratoDetalhe />} />
         <Route path="relatorio" element={<Relatorio />} />
       </Route>

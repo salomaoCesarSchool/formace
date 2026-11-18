@@ -1,9 +1,11 @@
 package com.formace.service;
 
 import com.formace.dto.ContratoRequest;
+import com.formace.dto.FiadorRequest;
 import com.formace.dto.ImovelRequest;
 import com.formace.dto.LocatarioRequest;
 import com.formace.entity.Contrato;
+import com.formace.entity.Fiador;
 import com.formace.entity.Imovel;
 import com.formace.entity.Locatario;
 import com.formace.enums.StatusContrato;
@@ -243,6 +245,7 @@ public class CadastroService {
         if (!req.dataFim().isAfter(req.dataInicio())) {
             throw new BadRequestException("Data de fim deve ser posterior a data de inicio");
         }
+        validarGarantia(req);
 
         Contrato contrato = Contrato.builder()
                 .codigo(proximoCodigoContrato())
@@ -254,11 +257,16 @@ public class CadastroService {
                 .diaVencimento(req.diaVencimento())
                 .pdfUrl(req.pdfUrl())
                 .observacao(req.observacao())
+                .modelo(req.modelo())
+                .modalidadeGarantia(req.modalidadeGarantia())
+                .indiceReajuste(req.indiceReajuste())
+                .periodicidadeReajuste(req.periodicidadeReajuste())
                 .status(StatusContrato.ATIVO)
                 .build();
 
         ocuparImovel(imovel, locatario);
-        return contratoRepository.save(contrato);
+        Contrato salvo = contratoRepository.saveAndFlush(contrato);
+        return aplicarFiador(salvo, req);
     }
 
     @Transactional
@@ -268,6 +276,7 @@ public class CadastroService {
         if (!req.dataFim().isAfter(req.dataInicio())) {
             throw new BadRequestException("Data de fim deve ser posterior a data de inicio");
         }
+        validarGarantia(req);
 
         Imovel imovel = imovelRepository.findById(req.imovelId())
                 .orElseThrow(() -> new NotFoundException("Imovel " + req.imovelId() + " nao encontrado"));
@@ -284,9 +293,52 @@ public class CadastroService {
             contrato.setPdfUrl(req.pdfUrl().trim());
         }
         contrato.setObservacao(req.observacao());
+        contrato.setModelo(req.modelo());
+        contrato.setModalidadeGarantia(req.modalidadeGarantia());
+        contrato.setIndiceReajuste(req.indiceReajuste());
+        contrato.setPeriodicidadeReajuste(req.periodicidadeReajuste());
         contrato.setStatus(calcularStatus(contrato));
 
         ocuparImovel(imovel, locatario);
+        return aplicarFiador(contrato, req);
+    }
+
+    /** Garantia por fiador so e aceita com os dados do fiador informados. */
+    private void validarGarantia(ContratoRequest req) {
+        String garantia = req.modalidadeGarantia() == null ? "" : req.modalidadeGarantia().trim();
+        if ("FIADOR".equalsIgnoreCase(garantia)
+                && (req.fiador() == null || req.fiador().nome() == null
+                        || req.fiador().nome().isBlank())) {
+            throw new BadRequestException(
+                    "Garantia por fiador exige o preenchimento dos dados do fiador");
+        }
+    }
+
+    /**
+     * Persiste (ou atualiza) o fiador vinculado ao contrato; sem fiador no
+     * payload o registro antigo e removido (orphanRemoval).
+     */
+    private Contrato aplicarFiador(Contrato contrato, ContratoRequest req) {
+        FiadorRequest dados = req.fiador();
+        if (dados != null) {
+            Fiador fiador = contrato.getFiador();
+            if (fiador == null) {
+                fiador = new Fiador();
+                fiador.setContrato(contrato);
+                contrato.setFiador(fiador);
+            }
+            fiador.setNome(dados.nome().trim());
+            fiador.setCpf(dados.cpf().trim());
+            fiador.setRg(dados.rg());
+            fiador.setDataNascimento(dados.dataNascimento());
+            fiador.setEstadoCivil(dados.estadoCivil());
+            fiador.setProfissao(dados.profissao());
+            fiador.setTelefone(dados.telefone());
+            fiador.setEmail(dados.email());
+            fiador.setEndereco(dados.endereco());
+        } else if (contrato.getFiador() != null) {
+            contrato.setFiador(null);
+        }
         return contratoRepository.save(contrato);
     }
 

@@ -2,14 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import Input from "../components/Input";
-import NovoContrato from "../components/NovoContrato";
-import type { ContratoCriado } from "../components/NovoContrato";
 import { api, mensagemDeErro } from "../api/axios";
 import { diasAte, formatMesReferencia } from "../utils/format";
 import PageHeader from "../components/PageHeader";
 import { CORES } from "../theme";
-import { adicionarContrato, useContratosCriados } from "../store/contratosStore";
-import type { Contrato, Imovel, Locatario } from "../types";
+import { useContratosCriados } from "../store/contratosStore";
+import type { Contrato } from "../types";
 
 const normalizar = (texto: string) =>
   texto
@@ -18,56 +16,24 @@ const normalizar = (texto: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]/g, "");
 
-/** Deriva bairro e cidade de um endereco digitado livremente. */
-function derivarBairroCidade(endereco: string): { bairro: string; cidade: string } {
-  const partes = endereco.split(/\s+[-–]\s+/);
-  const cauda = partes[partes.length - 1] ?? "";
-  const segmentos = cauda.split(",").map((s) => s.trim());
-
-  if (segmentos.length >= 2) {
-    return {
-      bairro: segmentos[0] || "Não informado",
-      cidade: (segmentos[segmentos.length - 1] || "").split("/")[0].trim() || "Não informada",
-    };
-  }
-  if (cauda.includes("/")) {
-    return {
-      bairro: "Não informado",
-      cidade: cauda.split("/")[0].trim() || "Não informada",
-    };
-  }
-  return { bairro: "Não informado", cidade: "Não informada" };
-}
-
 /**
- * Contratos em grade (visual das telas novas): contratos da API e os gerados
- * pelo assistente de contrato PDF.
+ * Contratos em grade (visual das telas novas): contratos da API e os
+ * gerados localmente pelo assistente (legado do protótipo).
  */
 export default function Contratos() {
   const navigate = useNavigate();
   const criados = useContratosCriados();
   const [contratosApi, setContratosApi] = useState<Contrato[]>([]);
-  const [imoveis, setImoveis] = useState<Imovel[]>([]);
-  const [locatarios, setLocatarios] = useState<Locatario[]>([]);
-  const [criando, setCriando] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
-  const [salvando, setSalvando] = useState(false);
   const [busca, setBusca] = useState("");
 
   const carregar = useCallback(async () => {
     setCarregando(true);
     setErro("");
     try {
-      const [respostaContratos, respostaImoveis, respostaLocatarios] =
-        await Promise.all([
-          api.get<Contrato[]>("/contratos"),
-          api.get<Imovel[]>("/imoveis"),
-          api.get<Locatario[]>("/locatarios"),
-        ]);
+      const respostaContratos = await api.get<Contrato[]>("/contratos");
       setContratosApi(respostaContratos.data);
-      setImoveis(respostaImoveis.data);
-      setLocatarios(respostaLocatarios.data);
     } catch (error) {
       setErro(mensagemDeErro(error));
     } finally {
@@ -78,83 +44,6 @@ export default function Contratos() {
   useEffect(() => {
     void carregar();
   }, [carregar]);
-
-  /**
-   * Conclui o assistente: primeiro tenta registrar na API (locatário, imóvel e
-   * contrato). Se a API não responder, guarda localmente (comportamento do
-   * protótipo das telas novas).
-   */
-  async function concluir(c: ContratoCriado) {
-    setSalvando(true);
-    setErro("");
-    const [ano, mes] = c.vence.split("/");
-    try {
-      const locatarioExistente = locatarios.find(
-        (l) => normalizar(l.nome) === normalizar(c.locatario),
-      );
-
-      // 1) locatário (se ainda não existir)
-      let locatarioId = locatarioExistente?.id;
-      if (!locatarioId) {
-        const resposta = await api.post<Locatario>("/locatarios", {
-          nome: c.locatario,
-          cpfCnpj: "A informar",
-          observacao: "Cadastrado pelo assistente de contrato PDF.",
-        });
-        locatarioId = resposta.data.id;
-      }
-
-      // 2) imóvel (reaproveita um cadastrado ou cria um novo)
-      const alvo = normalizar(c.imovel);
-      const imovelExistente = imoveis.find(
-        (i) =>
-          normalizar(`${i.endereco}${i.numero ?? ""}`).includes(alvo) ||
-          alvo.includes(normalizar(`${i.endereco}${i.numero ?? ""}`)) ||
-          normalizar(i.endereco) === alvo,
-      );
-
-      let imovelId = imovelExistente?.id;
-      if (!imovelId) {
-        const { bairro, cidade } = derivarBairroCidade(c.imovel);
-        const resposta = await api.post<Imovel>("/imoveis", {
-          codigo: `IM${String(Date.now()).slice(-6)}`.slice(0, 20),
-          endereco: c.imovel,
-          bairro,
-          cidade,
-          tipo: "Residencial",
-          valorAluguel: 0,
-          iptuMensal: 0,
-          status: "OCUPADO",
-          locatarioId,
-        });
-        imovelId = resposta.data.id;
-      }
-
-      // 3) contrato
-      const dataFim = mes && ano ? `${ano}-${mes}-01` : new Date().toISOString().slice(0, 10);
-      const respostaContrato = await api.post<Contrato>("/contratos", {
-        imovelId,
-        locatarioId,
-        dataInicio: new Date().toISOString().slice(0, 10),
-        dataFim,
-        valorMensal: 1,
-        diaVencimento: 10,
-        observacao: "Contrato gerado pelo assistente de contrato PDF.",
-      });
-
-      const id = String(respostaContrato.data.id);
-      // guarda o HTML assinado para a tela de detalhe exibir
-      adicionarContrato({ ...c, id });
-      setCriando(false);
-      navigate(`/contratos/${id}`);
-    } catch {
-      adicionarContrato(c);
-      setCriando(false);
-      navigate(`/contratos/${c.id}`);
-    } finally {
-      setSalvando(false);
-    }
-  }
 
   const idsApi = new Set(contratosApi.map((contrato) => String(contrato.id)));
 
@@ -197,7 +86,7 @@ export default function Contratos() {
         titulo="Contratos"
         subtitulo="Documentos digitalizados, sem arquivamento físico"
         acoes={
-          <Button variant="primary" onClick={() => setCriando(true)} disabled={salvando}>
+          <Button variant="primary" onClick={() => navigate("/contratos/novo")}>
             + Novo contrato PDF
           </Button>
         }
@@ -320,10 +209,6 @@ export default function Contratos() {
           </p>
         )}
       </div>
-
-      {criando && (
-        <NovoContrato onClose={() => setCriando(false)} onConcluir={concluir} />
-      )}
     </main>
   );
 }

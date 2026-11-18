@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import Button from "./Button";
-import { imprimirContrato } from "./NovoContrato";
-import type { ContratoCriado } from "./NovoContrato";
+import { imprimirContrato } from "../utils/contratoDocumento";
+import type { ContratoCriado } from "../utils/contratoDocumento";
 
 /* Tela "Ver contrato" para os contratos criados pelo "+ Novo contrato PDF". */
 function ContratoPDF({ contrato }: { contrato: ContratoCriado }) {

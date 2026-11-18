@@ -32,6 +32,7 @@ public interface LancamentoFinanceiroRepository extends JpaRepository<Lancamento
               left join fetch c.imovel ci
               left join fetch ci.locatario
               left join fetch c.locatario
+              left join fetch c.fiador
               left join fetch l.recibo
             """;
 

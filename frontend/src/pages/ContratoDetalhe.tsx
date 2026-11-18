@@ -7,6 +7,31 @@ import { api, mensagemDeErro, baixarArquivo } from "../api/axios";
 import type { Contrato } from "../types";
 import { formatBRL, formatData, rotuloVencimento } from "../utils/format";
 
+/** Rótulos das modalidades de garantia (iguais aos do formulário). */
+const GARANTIAS_ROTULO: Record<string, string> = {
+  SEM_GARANTIA: "Sem garantia",
+  FIADOR: "Fiador",
+  CAUCAO: "Caução",
+  SEGURO: "Seguro-fiança",
+};
+
+function Chip({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      style={{
+        background: "#eef4fc",
+        color: "#1a5fa8",
+        borderRadius: 999,
+        padding: "4px 12px",
+        fontSize: 11,
+        fontWeight: 600,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
 /* Detalhe do contrato:
    - contratos criados pelo assistente (local): abre o HTML assinado (ContratoPDF)
    - contratos da API: baixa o PDF servido pelo backend e exibe em iframe
@@ -136,6 +161,35 @@ function ContratoDaApi({ id }: { id?: string }) {
             {formatBRL(contrato.valorMensal)}/mês ·{" "}
             {formatData(contrato.dataInicio)} a {formatData(contrato.dataFim)}
           </p>
+          {(contrato.modelo ||
+            contrato.modalidadeGarantia ||
+            contrato.indiceReajuste) && (
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                flexWrap: "wrap",
+                marginTop: 8,
+              }}
+            >
+              {contrato.modelo && <Chip>{contrato.modelo}</Chip>}
+              {contrato.modalidadeGarantia && (
+                <Chip>
+                  Garantia:{" "}
+                  {GARANTIAS_ROTULO[contrato.modalidadeGarantia] ??
+                    contrato.modalidadeGarantia}
+                </Chip>
+              )}
+              {contrato.indiceReajuste && (
+                <Chip>
+                  Reajuste: {contrato.indiceReajuste}
+                  {contrato.periodicidadeReajuste
+                    ? ` · ${contrato.periodicidadeReajuste}`
+                    : ""}
+                </Chip>
+              )}
+            </div>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: 10 }}>
@@ -165,6 +219,46 @@ function ContratoDaApi({ id }: { id?: string }) {
 
       {aviso && (
         <p style={{ color: "#e17055", fontSize: 13, marginBottom: 12 }}>{aviso}</p>
+      )}
+
+      {contrato.fiador && (
+        <div
+          style={{
+            background: "#fafaff",
+            border: "1px solid #e2e8f0",
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 16,
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 6px",
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#1a5fa8",
+              textTransform: "uppercase",
+              letterSpacing: "0.6px",
+            }}
+          >
+            Fiador
+          </p>
+          <p style={{ margin: 0, fontSize: 14, color: "#16233b", fontWeight: 600 }}>
+            {contrato.fiador.nome} · CPF {contrato.fiador.cpf}
+            {contrato.fiador.rg ? ` · RG ${contrato.fiador.rg}` : ""}
+          </p>
+          <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b" }}>
+            {[
+              contrato.fiador.estadoCivil,
+              contrato.fiador.profissao,
+              contrato.fiador.telefone,
+              contrato.fiador.email,
+              contrato.fiador.endereco,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </div>
       )}
 
       {pdfUrl ? (

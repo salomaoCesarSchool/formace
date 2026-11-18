@@ -2,6 +2,7 @@ package com.formace.entity;
 
 import com.formace.enums.StatusContrato;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -86,6 +88,30 @@ public class Contrato {
 
     @Column(name = "observacao")
     private String observacao;
+
+    /** Modelo do contrato (ex.: Locacao residencial). */
+    @Column(name = "modelo", length = 60)
+    private String modelo;
+
+    /** Modalidade da garantia locaticia (FIADOR, CAUCAO, SEM_GARANTIA, SEGURO). */
+    @Column(name = "modalidade_garantia", length = 30)
+    private String modalidadeGarantia;
+
+    /** Indice de reajuste acordado (ex.: IPCA, IGPM). */
+    @Column(name = "indice_reajuste", length = 40)
+    private String indiceReajuste;
+
+    /** Periodicidade do reajuste (Anual, Semestral...). */
+    @Column(name = "periodicidade_reajuste", length = 20)
+    private String periodicidadeReajuste;
+
+    /**
+     * Fiador do contrato — o FK fica na tabela fiador (fiador.contrato_id);
+     * cascade persist/merge + orphanRemoval cuidam do ciclo no save do contrato.
+     */
+    @OneToOne(mappedBy = "contrato", fetch = FetchType.LAZY,
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private Fiador fiador;
 
     @Column(name = "criado_em", updatable = false)
     private LocalDateTime criadoEm;
