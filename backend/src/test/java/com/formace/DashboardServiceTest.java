@@ -63,10 +63,12 @@ class DashboardServiceTest {
         when(financeiroService.pendentesDoMes(anyString())).thenReturn(BigDecimal.ZERO);
         when(lancamentoRepository.countByStatusAndNatureza(any(), any())).thenReturn(0L);
         when(lancamentoRepository.buscarRecentes(any())).thenReturn(List.of());
-        when(lancamentoRepository.buscarCobrancasVencidas(any(), anyString(), any(), anyList(), any()))
+        when(lancamentoRepository.buscarCobrancasVencidas(any(), any(), anyList(), any()))
                 .thenReturn(List.of());
-        when(lancamentoRepository.somarCobrancasVencidas(any(), anyString(), any(), anyList(), any()))
+        when(lancamentoRepository.somarCobrancasVencidas(any(), any(), anyList(), any()))
                 .thenReturn(BigDecimal.ZERO);
+        when(lancamentoRepository.countPendentesAVencer(any(), anyString(), any(), any(), any()))
+                .thenReturn(0L);
     }
 
     private void stubContagem(StatusLancamento status, long quantidade) {
@@ -76,18 +78,24 @@ class DashboardServiceTest {
     }
 
     @Test
-    @DisplayName("Grafico do mes deve contar pagos, a vencer e em atraso por status")
+    @DisplayName("Grafico conta pagos/a vencer por status e separa pendente vencido como atraso")
     void graficoDeveContarPagamentosPorStatus() {
         stubContagem(StatusLancamento.PAGO, 95);
         stubContagem(StatusLancamento.PENDENTE, 10);
         stubContagem(StatusLancamento.ATRASADO, 3);
+        // dos 10 pendentes, 7 ainda nao venceram ("A vencer"); os 3 restantes
+        // estao vencidos e devem aparecer em "Em atraso"
+        when(lancamentoRepository.countPendentesAVencer(
+                eq(TipoLancamento.ALUGUEL), eq(mes), eq(NaturezaLancamento.ENTRADA),
+                eq(StatusLancamento.PENDENTE), any()))
+                .thenReturn(7L);
 
         DashboardResponse response = service.montar();
 
         DashboardResponse.PagamentosMes pm = response.pagamentosMes();
         assertThat(pm.pagos()).isEqualTo(95);
-        assertThat(pm.aVencer()).isEqualTo(10);
-        assertThat(pm.emAtraso()).isEqualTo(3);
+        assertThat(pm.aVencer()).isEqualTo(7);
+        assertThat(pm.emAtraso()).isEqualTo(6);
         assertThat(pm.total()).isEqualTo(108);
     }
 
@@ -122,12 +130,12 @@ class DashboardServiceTest {
         LocalDate vencido = hoje.minusDays(16);
 
         when(lancamentoRepository.buscarCobrancasVencidas(
-                eq(TipoLancamento.ALUGUEL), eq(mes), eq(NaturezaLancamento.ENTRADA), anyList(), eq(hoje)))
+                eq(TipoLancamento.ALUGUEL), eq(NaturezaLancamento.ENTRADA), anyList(), eq(hoje)))
                 .thenReturn(List.of(
                         cobranca(1L, maria, imovel, vencido, new BigDecimal("1500.00")),
                         cobranca(2L, joao, imovel, hoje.minusDays(3), new BigDecimal("2400.00"))));
         when(lancamentoRepository.somarCobrancasVencidas(
-                eq(TipoLancamento.ALUGUEL), eq(mes), eq(NaturezaLancamento.ENTRADA), anyList(), eq(hoje)))
+                eq(TipoLancamento.ALUGUEL), eq(NaturezaLancamento.ENTRADA), anyList(), eq(hoje)))
                 .thenReturn(new BigDecimal("3900.00"));
 
         DashboardResponse response = service.montar();
@@ -155,7 +163,7 @@ class DashboardServiceTest {
         LocalDate hoje = LocalDate.now();
 
         when(lancamentoRepository.buscarCobrancasVencidas(
-                eq(TipoLancamento.ALUGUEL), eq(mes), eq(NaturezaLancamento.ENTRADA), anyList(), eq(hoje)))
+                eq(TipoLancamento.ALUGUEL), eq(NaturezaLancamento.ENTRADA), anyList(), eq(hoje)))
                 .thenReturn(List.of(
                         cobranca(1L, maria, imovelA, hoje.minusDays(5), new BigDecimal("1000.00")),
                         cobranca(2L, maria, imovelB, hoje.minusDays(2), new BigDecimal("1000.00"))));
@@ -173,7 +181,7 @@ class DashboardServiceTest {
         LocalDate hoje = LocalDate.now();
 
         when(lancamentoRepository.buscarCobrancasVencidas(
-                eq(TipoLancamento.ALUGUEL), eq(mes), eq(NaturezaLancamento.ENTRADA), anyList(), eq(hoje)))
+                eq(TipoLancamento.ALUGUEL), eq(NaturezaLancamento.ENTRADA), anyList(), eq(hoje)))
                 .thenReturn(List.of(cobranca(1L, null, imovel, hoje.minusDays(1), new BigDecimal("900.00"))));
 
         DashboardResponse response = service.montar();

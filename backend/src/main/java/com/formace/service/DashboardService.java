@@ -62,22 +62,34 @@ public class DashboardService {
                 + lancamentoRepository.countByStatusAndNatureza(StatusLancamento.ATRASADO, NaturezaLancamento.ENTRADA);
 
         // ---- Grafico "Pagamentos dos alugueis" do mes vigente ----
+        // "A vencer" = pendente com vencimento futuro; pendente JA vencido conta
+        // como "em atraso" (o status e definido na criacao e nao muda sozinho
+        // quando o vencimento passa, entao confiar só no status mostraria
+        // aluguel vencido como "a vencer").
         long pagosAluguel = lancamentoRepository.countByTipoAndMesReferenciaAndStatusAndNatureza(
                 TipoLancamento.ALUGUEL, mes, StatusLancamento.PAGO, NaturezaLancamento.ENTRADA);
-        long aVencerAluguel = lancamentoRepository.countByTipoAndMesReferenciaAndStatusAndNatureza(
+        long pendentesAluguel = lancamentoRepository.countByTipoAndMesReferenciaAndStatusAndNatureza(
                 TipoLancamento.ALUGUEL, mes, StatusLancamento.PENDENTE, NaturezaLancamento.ENTRADA);
+        long pendentesAVencer = lancamentoRepository.countPendentesAVencer(
+                TipoLancamento.ALUGUEL, mes, NaturezaLancamento.ENTRADA, StatusLancamento.PENDENTE, hoje);
+        long aVencerAluguel = pendentesAVencer;
         long emAtrasoAluguel = lancamentoRepository.countByTipoAndMesReferenciaAndStatusAndNatureza(
-                TipoLancamento.ALUGUEL, mes, StatusLancamento.ATRASADO, NaturezaLancamento.ENTRADA);
+                TipoLancamento.ALUGUEL, mes, StatusLancamento.ATRASADO, NaturezaLancamento.ENTRADA)
+                + (pendentesAluguel - pendentesAVencer);
         DashboardResponse.PagamentosMes pagamentosMes = new DashboardResponse.PagamentosMes(
                 pagosAluguel, aVencerAluguel, emAtrasoAluguel,
                 pagosAluguel + aVencerAluguel + emAtrasoAluguel);
 
         // ---- Inadimplencia e lista de cobrancas pendentes ----
+        // Sem filtro de competencia: inadimplencia e saldo acumulado (aluguel de
+        // meses anteriores ainda nao pago continua em aberto). O Financeiro usa a
+        // mesma visao na aba Cobrancas; filtrar pelo mes vigente fazia o KPI
+        // mostrar 0 enquanto existiam lancamentos ATRASADO/PENDENTE vencidos.
         List<StatusLancamento> emAberto = List.of(StatusLancamento.PENDENTE, StatusLancamento.ATRASADO);
         List<LancamentoFinanceiro> cobrancasBrutas = lancamentoRepository.buscarCobrancasVencidas(
-                TipoLancamento.ALUGUEL, mes, NaturezaLancamento.ENTRADA, emAberto, hoje);
+                TipoLancamento.ALUGUEL, NaturezaLancamento.ENTRADA, emAberto, hoje);
         BigDecimal valorEmAberto = lancamentoRepository.somarCobrancasVencidas(
-                TipoLancamento.ALUGUEL, mes, NaturezaLancamento.ENTRADA, emAberto, hoje);
+                TipoLancamento.ALUGUEL, NaturezaLancamento.ENTRADA, emAberto, hoje);
 
         long inadimplentes = cobrancasBrutas.stream()
                 .map(l -> l.getLocatario() != null ? l.getLocatario().getId() : null)

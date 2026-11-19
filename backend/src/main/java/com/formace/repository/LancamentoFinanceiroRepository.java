@@ -114,36 +114,44 @@ public interface LancamentoFinanceiroRepository extends JpaRepository<Lancamento
                                                          StatusLancamento status,
                                                          NaturezaLancamento natureza);
 
-    /** Cobranças em aberto (nao pagas) e ja vencidas do mes — lista do dashboard. */
-    @Query("""
-            select l from LancamentoFinanceiro l
-              left join fetch l.imovel i
-              left join fetch l.locatario
+    /** Cobranças em aberto (nao pagas) e ja vencidas, de qualquer competencia — lista do dashboard. */
+    @Query("select l from LancamentoFinanceiro l " + FETCH + """
              where l.tipo = :tipo
-               and l.mesReferencia = :mes
                and l.natureza = :natureza
                and l.status in :status
                and l.dataVencimento <= :hoje
              order by l.dataVencimento asc, l.id asc
             """)
     List<LancamentoFinanceiro> buscarCobrancasVencidas(@Param("tipo") TipoLancamento tipo,
-                                                       @Param("mes") String mes,
                                                        @Param("natureza") NaturezaLancamento natureza,
                                                        @Param("status") List<StatusLancamento> status,
                                                        @Param("hoje") LocalDate hoje);
 
-    /** Soma em aberto das cobranças vencidas do mes (total a receber). */
+    /** Soma em aberto das cobrancas vencidas (total a receber, qualquer competencia). */
     @Query("""
             select coalesce(sum(l.valorTotal), 0) from LancamentoFinanceiro l
              where l.tipo = :tipo
-               and l.mesReferencia = :mes
                and l.natureza = :natureza
                and l.status in :status
                and l.dataVencimento <= :hoje
             """)
     BigDecimal somarCobrancasVencidas(@Param("tipo") TipoLancamento tipo,
-                                     @Param("mes") String mes,
                                      @Param("natureza") NaturezaLancamento natureza,
                                      @Param("status") List<StatusLancamento> status,
                                      @Param("hoje") LocalDate hoje);
+
+    /** Pendentes do mes com vencimento ainda futuro — grafico "A vencer". */
+    @Query("""
+            select count(l) from LancamentoFinanceiro l
+             where l.tipo = :tipo
+               and l.mesReferencia = :mes
+               and l.natureza = :natureza
+               and l.status = :status
+               and l.dataVencimento >= :hoje
+            """)
+    long countPendentesAVencer(@Param("tipo") TipoLancamento tipo,
+                               @Param("mes") String mes,
+                               @Param("natureza") NaturezaLancamento natureza,
+                               @Param("status") StatusLancamento status,
+                               @Param("hoje") LocalDate hoje);
 }

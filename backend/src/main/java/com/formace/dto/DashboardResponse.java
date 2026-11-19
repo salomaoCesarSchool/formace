@@ -28,7 +28,7 @@ public record DashboardResponse(
     public record PagamentosMes(long pagos, long aVencer, long emAtraso, long total) {
     }
 
-    /** Inquilinos que ainda nao pagaram o aluguel do mes vigente. */
+    /** Inquilinos com aluguel vencido e ainda em aberto (qualquer competencia). */
     public record Inadimplentes(long quantidade, BigDecimal valorEmAberto) {
     }
 
