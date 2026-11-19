@@ -23,9 +23,15 @@ function ExigirLogin({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-/** Restringe a rota ao perfil (matriz ADMIN/GESTOR/OPERADOR). */
-function ExigirPermissao({ permitido, children }: { permitido: boolean; children: ReactNode }) {
-  if (!permitido) {
+/**
+ * Restringe a rota ao perfil (matriz ADMIN/GESTOR/OPERADOR).
+ * A funcao de permissao e chamada AQUI, no momento da renderizacao: como o App
+ * so renderiza uma vez (antes do login), avaliar `podeVerFinanceiro()` como
+ * prop deixava o guard com valor antigo e o primeiro clique em Financeiro era
+ * redirecionado para a Visao geral.
+ */
+function ExigirPermissao({ teste, children }: { teste: () => boolean; children: ReactNode }) {
+  if (!teste()) {
     return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
@@ -52,7 +58,7 @@ export default function App() {
         <Route
           path="financeiro"
           element={
-            <ExigirPermissao permitido={podeVerFinanceiro()}>
+            <ExigirPermissao teste={podeVerFinanceiro}>
               <Financeiro />
             </ExigirPermissao>
           }
@@ -64,7 +70,7 @@ export default function App() {
         <Route
           path="relatorio"
           element={
-            <ExigirPermissao permitido={podeVerFinanceiro()}>
+            <ExigirPermissao teste={podeVerFinanceiro}>
               <Relatorio />
             </ExigirPermissao>
           }
@@ -73,7 +79,7 @@ export default function App() {
         <Route
           path="acesso"
           element={
-            <ExigirPermissao permitido={podeGerenciarUsuarios()}>
+            <ExigirPermissao teste={podeGerenciarUsuarios}>
               <Acesso />
             </ExigirPermissao>
           }
