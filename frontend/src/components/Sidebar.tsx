@@ -95,7 +95,12 @@ function Sidebar({ usuario, ativo = "Visão geral" }: SidebarProps) {
     <aside
       style={{
         width: 260,
-        minHeight: "100vh",
+        // Altura fixa + sticky: o menu nao acompanha a rolagem da pagina e o
+        // botao de saida fica sempre visivel na base (em paginas longas ele
+        // sumia abaixo da dobra porque o aside esticava junto com o conteudo).
+        height: "100vh",
+        position: "sticky",
+        top: 0,
         padding: "32px 24px",
         color: "#fff",
         fontFamily: "'Nunito', sans-serif",
@@ -115,7 +120,18 @@ function Sidebar({ usuario, ativo = "Visão geral" }: SidebarProps) {
         <br />
         {usuario}
       </p>
-      <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      {/* flex + overflow: em telas baixas a lista rola sozinha e o botao de
+          saida (abaixo) nunca e cortado. */}
+      <nav
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+        }}
+      >
         {menuItems
           .filter((item) => !item.visivel || item.visivel())
           .map((item) => (
@@ -148,6 +164,7 @@ function Sidebar({ usuario, ativo = "Visão geral" }: SidebarProps) {
         onClick={sair}
         style={{
           marginTop: "auto",
+          flexShrink: 0,
           display: "flex",
           alignItems: "center",
           gap: 10,
